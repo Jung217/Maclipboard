@@ -30,7 +30,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         NotificationCenter.default.addObserver(forName: NSNotification.Name("HidePanel"), object: nil, queue: .main) { [weak self] _ in
             self?.floatingPanel.orderOut(nil)
-            NSApplication.shared.hide(nil)
+            self?.popover.performClose(nil)
         }
         
         // Create the SwiftUI view for the popover/panel
@@ -90,6 +90,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         HotkeyManager.shared.registerCmdShiftV()
     }
     
+    func storePreviousApp() {
+        if let frontApp = NSWorkspace.shared.frontmostApplication,
+           frontApp.bundleIdentifier != Bundle.main.bundleIdentifier {
+            clipboardManager.previousApp = frontApp
+        }
+    }
+
     @objc func togglePopover(_ sender: AnyObject?) {
         if floatingPanel.isVisible { floatingPanel.orderOut(nil) }
         
@@ -97,6 +104,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if popover.isShown {
                 popover.performClose(sender)
             } else {
+                storePreviousApp()
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
                 NSApp.activate(ignoringOtherApps: true)
             }
@@ -109,14 +117,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if floatingPanel.isVisible && floatingPanel.isKeyWindow {
             floatingPanel.orderOut(nil)
         } else {
+            storePreviousApp()
             let mouseLocation = NSEvent.mouseLocation
             
-            // Calculate position so panel appears below and centered on the cursor
             let width: CGFloat = 350
             let height: CGFloat = 450
-            let x = mouseLocation.x - (width / 2)
-            let y = mouseLocation.y - height - 10 // 10px below cursor
-            
+
+            // Find the screen that contains the mouse cursor
+            let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) })
+                ?? NSScreen.main
+                ?? NSScreen.screens[0]
+            let screenFrame = screen.visibleFrame
+
+            // Try to show the panel above the cursor; if not enough room, show below
+            var x = mouseLocation.x - (width / 2)
+            var y = mouseLocation.y + 10 // 10px above cursor by default
+
+            // If panel would go above the top of the screen, flip it below the cursor
+            if y + height > screenFrame.maxY {
+                y = mouseLocation.y - height - 10
+            }
+
+            // Clamp horizontally so panel never goes off screen edges
+            x = max(screenFrame.minX, min(x, screenFrame.maxX - width))
+            // Clamp vertically so panel never goes below screen bottom
+            y = max(screenFrame.minY, y)
+
             floatingPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
             floatingPanel.makeKeyAndOrderFront(nil)
             NSApp.activate(ignoringOtherApps: true)

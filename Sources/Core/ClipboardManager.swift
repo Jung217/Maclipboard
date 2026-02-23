@@ -95,16 +95,24 @@ class ClipboardManager: ObservableObject {
     func copyAndPaste(item: ClipboardItem) {
         copyToClipboard(item: item)
         
-        // Hide our app to return focus to the previously active application
+        guard let app = previousApp else {
+            // No previous app tracked — just hide the panel and copy to clipboard only
+            NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
+            return
+        }
+
+        // Step 1: Hide our panel
         NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
-        
-        // A slight delay to ensure the previous app has regained focus
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+
+        // Step 2: Activate the previous app to restore its focus
+        app.activate(options: .activateIgnoringOtherApps)
+
+        // Step 3: Wait long enough for macOS to finish the app switch, then paste
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             let vKeyCode: CGKeyCode = 0x09 // 'v'
             let cmdKeyCode: CGKeyCode = 0x37 // Command
             guard let src = CGEventSource(stateID: .hidSystemState) else { return }
             
-            // Physically stroke the Command key for robustness
             let cmdDown = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: true)
             let vDown = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: true)
             vDown?.flags = .maskCommand
