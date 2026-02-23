@@ -31,6 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(forName: NSNotification.Name("HidePanel"), object: nil, queue: .main) { [weak self] _ in
             self?.floatingPanel.orderOut(nil)
             self?.popover.performClose(nil)
+            NSApplication.shared.hide(nil)
         }
         
         // Create the SwiftUI view for the popover/panel
@@ -117,30 +118,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if floatingPanel.isVisible && floatingPanel.isKeyWindow {
             floatingPanel.orderOut(nil)
         } else {
-            storePreviousApp()
+            // Use the app captured synchronously in the Carbon callback — this is the real
+            // previously-focused app, captured before our process stole focus
+            if let captured = HotkeyManager.shared.capturedApp,
+               captured.bundleIdentifier != Bundle.main.bundleIdentifier {
+                clipboardManager.previousApp = captured
+            }
+
             let mouseLocation = NSEvent.mouseLocation
-            
             let width: CGFloat = 350
             let height: CGFloat = 450
 
-            // Find the screen that contains the mouse cursor
             let screen = NSScreen.screens.first(where: { NSMouseInRect(mouseLocation, $0.frame, false) })
                 ?? NSScreen.main
                 ?? NSScreen.screens[0]
             let screenFrame = screen.visibleFrame
 
-            // Try to show the panel above the cursor; if not enough room, show below
             var x = mouseLocation.x - (width / 2)
-            var y = mouseLocation.y + 10 // 10px above cursor by default
+            var y = mouseLocation.y + 10
 
-            // If panel would go above the top of the screen, flip it below the cursor
             if y + height > screenFrame.maxY {
                 y = mouseLocation.y - height - 10
             }
 
-            // Clamp horizontally so panel never goes off screen edges
             x = max(screenFrame.minX, min(x, screenFrame.maxX - width))
-            // Clamp vertically so panel never goes below screen bottom
             y = max(screenFrame.minY, y)
 
             floatingPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)

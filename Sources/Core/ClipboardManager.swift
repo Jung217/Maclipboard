@@ -94,36 +94,44 @@ class ClipboardManager: ObservableObject {
     
     func copyAndPaste(item: ClipboardItem) {
         copyToClipboard(item: item)
-        
-        guard let app = previousApp else {
-            // No previous app tracked — just hide the panel and copy to clipboard only
+
+        guard AXIsProcessTrusted() else {
+            print("⚠️ Accessibility permission not granted — cannot auto-paste")
             NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
             return
         }
 
-        // Step 1: Hide our panel
+        let targetApp = previousApp
+        let targetPid = targetApp?.processIdentifier ?? -1
+
+        guard targetPid > 0 else {
+            print("⚠️ No target app pid — panel was not opened via hotkey or target lost")
+            NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
+            return
+        }
+
+        // Close panel and activate the target app
         NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
+        targetApp?.activate(options: .activateIgnoringOtherApps)
 
-        // Step 2: Activate the previous app to restore its focus
-        app.activate(options: .activateIgnoringOtherApps)
-
-        // Step 3: Wait long enough for macOS to finish the app switch, then paste
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            let vKeyCode: CGKeyCode = 0x09 // 'v'
-            let cmdKeyCode: CGKeyCode = 0x37 // Command
+        // Post Cmd+V directly to the target app's PID — bypasses WindowServer keyboard focus routing
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            let vKeyCode: CGKeyCode = 0x09
+            let cmdKeyCode: CGKeyCode = 0x37
             guard let src = CGEventSource(stateID: .hidSystemState) else { return }
-            
+
             let cmdDown = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: true)
-            let vDown = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: true)
+            let vDown   = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: true)
             vDown?.flags = .maskCommand
-            let vUp = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: false)
-            vUp?.flags = .maskCommand
-            let cmdUp = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: false)
-            
-            cmdDown?.post(tap: .cghidEventTap)
-            vDown?.post(tap: .cghidEventTap)
-            vUp?.post(tap: .cghidEventTap)
-            cmdUp?.post(tap: .cghidEventTap)
+            let vUp     = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: false)
+            vUp?.flags  = .maskCommand
+            let cmdUp   = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: false)
+
+            // Post directly to the process ID — not to focused window
+            cmdDown?.postToPid(targetPid)
+            vDown?.postToPid(targetPid)
+            vUp?.postToPid(targetPid)
+            cmdUp?.postToPid(targetPid)
         }
     }
     

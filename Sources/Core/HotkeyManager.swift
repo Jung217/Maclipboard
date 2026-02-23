@@ -5,14 +5,18 @@ class HotkeyManager {
     static let shared = HotkeyManager()
     
     var action: (() -> Void)?
-    
+    var capturedApp: NSRunningApplication?
+
     private init() {}
     
     func registerCmdShiftV() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         
         let handler: EventHandlerUPP = { (_, _, _) -> OSStatus in
+            // Capture frontmost app NOW before our app steals focus
+            let prevApp = NSWorkspace.shared.frontmostApplication
             DispatchQueue.main.async {
+                HotkeyManager.shared.capturedApp = prevApp
                 HotkeyManager.shared.action?()
             }
             return noErr

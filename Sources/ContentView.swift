@@ -3,6 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var clipboardManager: ClipboardManager
     @State private var selectedIndex: Int? = 0
+    @State private var eventMonitor: Any?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -65,8 +66,10 @@ struct ContentView: View {
                     }
                     .onChange(of: selectedIndex) { newIndex in
                         if let index = newIndex, index >= 0, index < clipboardManager.history.count {
-                            withAnimation {
-                                proxy.scrollTo(clipboardManager.history[index].id, anchor: .center)
+                            DispatchQueue.main.async {
+                                withAnimation {
+                                    proxy.scrollTo(clipboardManager.history[index].id, anchor: .center)
+                                }
                             }
                         }
                     }
@@ -80,18 +83,26 @@ struct ContentView: View {
         .onAppear {
             selectedIndex = clipboardManager.history.isEmpty ? nil : 0
             
-            NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                if event.keyCode == 125 { // Down arrow
-                    moveSelection(1)
-                    return nil // Consume event
-                } else if event.keyCode == 126 { // Up arrow
-                    moveSelection(-1)
-                    return nil // Consume event
-                } else if event.keyCode == 36 { // Return
-                    handleReturn()
-                    return nil
+            if eventMonitor == nil {
+                eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                    if event.keyCode == 125 { // Down arrow
+                        moveSelection(1)
+                        return nil // Consume event
+                    } else if event.keyCode == 126 { // Up arrow
+                        moveSelection(-1)
+                        return nil // Consume event
+                    } else if event.keyCode == 36 { // Return
+                        handleReturn()
+                        return nil
+                    }
+                    return event
                 }
-                return event
+            }
+        }
+        .onDisappear {
+            if let monitor = eventMonitor {
+                NSEvent.removeMonitor(monitor)
+                eventMonitor = nil
             }
         }
     }
