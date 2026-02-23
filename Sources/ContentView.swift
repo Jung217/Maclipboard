@@ -155,13 +155,12 @@ struct ClipboardItemRow: View {
         .help(item.content) // Full text tooltip on hover
         .background(
             isClicked ? Color.gray.opacity(0.3) :
-            (isSelected ? Color.blue.opacity(0.1) :
-            (isHovered ? Color.gray.opacity(0.1) : Color(NSColor.controlBackgroundColor)))
+            (isSelected || isHovered ? Color.gray.opacity(0.1) : Color(NSColor.controlBackgroundColor))
         )
         // Adding a clear thin border to make cards "pop" per user request
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.2), lineWidth: isSelected ? 2 : 1)
+                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
         )
         .cornerRadius(10)
         .padding(.horizontal, 14)
