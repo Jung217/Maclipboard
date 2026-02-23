@@ -20,6 +20,7 @@ $(APP_DIR): $(SWIFT_SOURCES) Info.plist
 	@cp Info.plist $(CONTENTS_DIR)/
 	@if [ -f AppIcon.icns ]; then cp AppIcon.icns $(RESOURCES_DIR)/; fi
 	$(SWIFTC) $(SWIFT_SOURCES) -target $(SWIFT_TARGET) -o $(MACOS_DIR)/$(APP_NAME)
+	@codesign --force --deep --sign - $(APP_DIR)
 	@echo "Build complete at $(APP_DIR)"
 
 run: app

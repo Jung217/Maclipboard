@@ -101,21 +101,13 @@ class ClipboardManager: ObservableObject {
             return
         }
 
-        let targetApp = previousApp
-        let targetPid = targetApp?.processIdentifier ?? -1
-
-        guard targetPid > 0 else {
-            print("⚠️ No target app pid — panel was not opened via hotkey or target lost")
-            NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
-            return
-        }
-
-        // Close panel and activate the target app
+        // Close panel
         NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
-        targetApp?.activate(options: .activateIgnoringOtherApps)
 
-        // Post Cmd+V directly to the target app's PID — bypasses WindowServer keyboard focus routing
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+        // Give a tiny delay for the floating panel to visually disappear. 
+        // Since we use a nonactivatingPanel now, the user's original app 
+        // NEVER LOST frontmost focus! So we can just blast CMD+V generally.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             let vKeyCode: CGKeyCode = 0x09
             let cmdKeyCode: CGKeyCode = 0x37
             guard let src = CGEventSource(stateID: .hidSystemState) else { return }
@@ -127,11 +119,11 @@ class ClipboardManager: ObservableObject {
             vUp?.flags  = .maskCommand
             let cmdUp   = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: false)
 
-            // Post directly to the process ID — not to focused window
-            cmdDown?.postToPid(targetPid)
-            vDown?.postToPid(targetPid)
-            vUp?.postToPid(targetPid)
-            cmdUp?.postToPid(targetPid)
+            let loc = CGEventTapLocation.cghidEventTap
+            cmdDown?.post(tap: loc)
+            vDown?.post(tap: loc)
+            vUp?.post(tap: loc)
+            cmdUp?.post(tap: loc)
         }
     }
     

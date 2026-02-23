@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the floating panel (for global hotkey)
         floatingPanel = BorderlessFloatingPanel(
             contentRect: NSRect(x: 0, y: 0, width: 350, height: 450),
-            styleMask: [.borderless],
+            styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
@@ -152,12 +152,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             floatingPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
             floatingPanel.makeKeyAndOrderFront(nil)
-            
-            if #available(macOS 14.0, *) {
-                NSApp.activate()
-            } else {
-                NSApp.activate(ignoringOtherApps: true)
-            }
         }
     }
 }
