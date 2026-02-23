@@ -106,8 +106,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 popover.performClose(sender)
             } else {
                 storePreviousApp()
+                
+                // Show popover first
                 popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
-                NSApp.activate(ignoringOtherApps: true)
+                
+                // Do not activate NSApp here. Activating it forces a space switch 
+                // if the OS thinks the "primary" space for the app is elsewhere.
+                // The popover itself will receive keystrokes without full app activation.
+                popover.contentViewController?.view.window?.makeKey()
             }
         }
     }
@@ -146,7 +152,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
             floatingPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
             floatingPanel.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
+            
+            if #available(macOS 14.0, *) {
+                NSApp.activate()
+            } else {
+                NSApp.activate(ignoringOtherApps: true)
+            }
         }
     }
 }

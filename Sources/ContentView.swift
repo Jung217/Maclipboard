@@ -3,7 +3,7 @@ import SwiftUI
 struct ContentView: View {
     @EnvironmentObject var clipboardManager: ClipboardManager
     @State private var selectedIndex: Int? = 0
-    @State private var eventMonitor: Any?
+
     
     var body: some View {
         VStack(spacing: 0) {
@@ -78,36 +78,25 @@ struct ContentView: View {
         }
         .frame(width: 350, height: 450)
         .background(Color(NSColor.windowBackgroundColor))
-        // For arrow keys, we can use onReceive of keyboard events if we build a custom view,
-        // but SwiftUI's native keyboard navigation approach is easier with hidden buttons or focus state.
+        .background(
+            Group {
+                Button("") { moveSelection(1) }
+                    .keyboardShortcut(.downArrow, modifiers: [])
+                Button("") { moveSelection(-1) }
+                    .keyboardShortcut(.upArrow, modifiers: [])
+                Button("") { handleReturn() }
+                    .keyboardShortcut(.return, modifiers: [])
+            }
+            .frame(width: 0, height: 0)
+            .opacity(0)
+        )
         .onAppear {
             selectedIndex = clipboardManager.history.isEmpty ? nil : 0
-            
-            if eventMonitor == nil {
-                eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                    if event.keyCode == 125 { // Down arrow
-                        moveSelection(1)
-                        return nil // Consume event
-                    } else if event.keyCode == 126 { // Up arrow
-                        moveSelection(-1)
-                        return nil // Consume event
-                    } else if event.keyCode == 36 { // Return
-                        handleReturn()
-                        return nil
-                    }
-                    return event
-                }
-            }
-        }
-        .onDisappear {
-            if let monitor = eventMonitor {
-                NSEvent.removeMonitor(monitor)
-                eventMonitor = nil
-            }
         }
     }
     
     private func moveSelection(_ delta: Int) {
+        print("moveSelection called with delta \(delta)")
         guard !clipboardManager.history.isEmpty else { return }
         
         var newIndex = (selectedIndex ?? 0) + delta
@@ -118,11 +107,14 @@ struct ContentView: View {
         }
         
         selectedIndex = newIndex
+        print("moveSelection selectedIndex is now \(selectedIndex ?? -1)")
     }
     
     private func handleReturn() {
+        print("handleReturn called")
         guard let idx = selectedIndex, idx < clipboardManager.history.count else { return }
         let item = clipboardManager.history[idx]
+        print("handleReturn selected item: \(item.content)")
         clipboardManager.copyAndPaste(item: item)
     }
 }
