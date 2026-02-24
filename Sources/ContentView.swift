@@ -5,6 +5,14 @@ struct ContentView: View {
     @EnvironmentObject var settings: SettingsManager
     @State private var selectedIndex: Int? = 0
     @State private var showSettings: Bool = false
+    @State private var selectedTab: Int = 0 // 0: All, 1: Pinned
+    
+    private var displayedHistory: [ClipboardItem] {
+        if selectedTab == 1 {
+            return clipboardManager.history.filter { $0.isPinned }
+        }
+        return clipboardManager.history
+    }
     
     var body: some View {
         ZStack {
@@ -69,10 +77,10 @@ struct ContentView: View {
                     SettingsView()
                         .transition(.opacity)
                 } else {
-                    if clipboardManager.history.isEmpty {
+                    if displayedHistory.isEmpty {
                         VStack {
                             Spacer()
-                            Text("No history yet.")
+                            Text(selectedTab == 1 ? "No pinned items." : "No history yet.")
                                 .foregroundColor(.secondary)
                             Spacer()
                         }
@@ -80,7 +88,7 @@ struct ContentView: View {
                         ScrollViewReader { proxy in
                             ScrollView {
                                 LazyVStack(spacing: 4) {
-                                    ForEach(Array(clipboardManager.history.enumerated()), id: \.element.id) { index, item in
+                                    ForEach(Array(displayedHistory.enumerated()), id: \.element.id) { index, item in
                                         ClipboardItemRow(
                                             item: item,
                                             isSelected: selectedIndex == index,
@@ -98,16 +106,26 @@ struct ContentView: View {
                                 .padding(.vertical, 8)
                             }
                             .onChange(of: selectedIndex) { newIndex in
-                                if let index = newIndex, index >= 0, index < clipboardManager.history.count {
+                                if let index = newIndex, index >= 0, index < displayedHistory.count {
                                     DispatchQueue.main.async {
                                         withAnimation {
-                                            proxy.scrollTo(clipboardManager.history[index].id, anchor: .center)
+                                            proxy.scrollTo(displayedHistory[index].id, anchor: .center)
                                         }
                                     }
                                 }
                             }
                         }
                     }
+                    
+                    Divider()
+                    
+                    Picker("", selection: $selectedTab) {
+                        Text("All").tag(0)
+                        Text("Pinned").tag(1)
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal)
+                    .padding(.vertical, 8)
                 }
             }
         }
@@ -121,31 +139,45 @@ struct ContentView: View {
                     .keyboardShortcut(.upArrow, modifiers: [])
                 Button("") { handleReturn() }
                     .keyboardShortcut(.return, modifiers: [])
+                Button("") { switchTab(-1) }
+                    .keyboardShortcut(.leftArrow, modifiers: [])
+                Button("") { switchTab(1) }
+                    .keyboardShortcut(.rightArrow, modifiers: [])
             }
             .frame(width: 0, height: 0)
             .opacity(0)
         )
         .onAppear {
-            selectedIndex = clipboardManager.history.isEmpty ? nil : 0
+            selectedIndex = displayedHistory.isEmpty ? nil : 0
         }
     }
     
     private func moveSelection(_ delta: Int) {
-        guard !clipboardManager.history.isEmpty else { return }
+        guard !displayedHistory.isEmpty else { return }
         
         var newIndex = (selectedIndex ?? 0) + delta
         if newIndex < 0 {
             newIndex = 0
-        } else if newIndex >= clipboardManager.history.count {
-            newIndex = clipboardManager.history.count - 1
+        } else if newIndex >= displayedHistory.count {
+            newIndex = displayedHistory.count - 1
         }
         
         selectedIndex = newIndex
     }
     
     private func handleReturn() {
-        guard let idx = selectedIndex, idx < clipboardManager.history.count else { return }
-        clipboardManager.copyAndPaste(item: clipboardManager.history[idx])
+        guard let idx = selectedIndex, idx < displayedHistory.count else { return }
+        clipboardManager.copyAndPaste(item: displayedHistory[idx])
+    }
+    
+    private func switchTab(_ direction: Int) {
+        guard !showSettings else { return }
+        let newTab = max(0, min(1, selectedTab + direction))
+        if newTab != selectedTab {
+            withAnimation {
+                selectedTab = newTab
+            }
+        }
     }
 }
 
