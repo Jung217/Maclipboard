@@ -76,7 +76,7 @@ struct ContentView: View {
                 }
             }
         }
-        .frame(width: 350, height: 450)
+        .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
         .background(Color(NSColor.windowBackgroundColor))
         .background(
             Group {
@@ -96,7 +96,6 @@ struct ContentView: View {
     }
     
     private func moveSelection(_ delta: Int) {
-        print("moveSelection called with delta \(delta)")
         guard !clipboardManager.history.isEmpty else { return }
         
         var newIndex = (selectedIndex ?? 0) + delta
@@ -107,15 +106,11 @@ struct ContentView: View {
         }
         
         selectedIndex = newIndex
-        print("moveSelection selectedIndex is now \(selectedIndex ?? -1)")
     }
     
     private func handleReturn() {
-        print("handleReturn called")
         guard let idx = selectedIndex, idx < clipboardManager.history.count else { return }
-        let item = clipboardManager.history[idx]
-        print("handleReturn selected item: \(item.content)")
-        clipboardManager.copyAndPaste(item: item)
+        clipboardManager.copyAndPaste(item: clipboardManager.history[idx])
     }
 }
 
