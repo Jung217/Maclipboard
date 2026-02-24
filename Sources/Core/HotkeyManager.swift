@@ -9,7 +9,7 @@ class HotkeyManager {
 
     private init() {}
     
-    func registerCmdShiftV() {
+    func registerCtrlV() {
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         
         let handler: EventHandlerUPP = { (_, _, _) -> OSStatus in
@@ -28,8 +28,7 @@ class HotkeyManager {
         var hotKeyRef: EventHotKeyRef?
         
         // kVK_ANSI_V = 0x09 (9)
-        // cmdKey = 0x0100 (256)
-        // shiftKey = 0x0200 (512)
-        RegisterEventHotKey(UInt32(kVK_ANSI_V), UInt32(cmdKey | shiftKey), hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        // controlKey = 0x1000 (4096)
+        RegisterEventHotKey(UInt32(kVK_ANSI_V), UInt32(controlKey), hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 }

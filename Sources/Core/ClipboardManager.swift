@@ -96,34 +96,57 @@ class ClipboardManager: ObservableObject {
         copyToClipboard(item: item)
 
         guard AXIsProcessTrusted() else {
-            print("⚠️ Accessibility permission not granted — cannot auto-paste")
             NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
+            
+            DispatchQueue.main.async {
+                let alert = NSAlert()
+                alert.messageText = "Accessibility Permission Required"
+                alert.informativeText = "macOS has revoked Maclipboard's Accessibility permission because the app was recompiled.\n\nPlease go to System Settings → Privacy & Security → Accessibility, remove (—) Maclipboard, and add (+) it again."
+                alert.alertStyle = .critical
+                alert.addButton(withTitle: "Open System Settings")
+                alert.addButton(withTitle: "Cancel")
+                
+                NSRunningApplication.current.activate(options: .activateIgnoringOtherApps)
+                
+                if alert.runModal() == .alertFirstButtonReturn {
+                    let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+                    NSWorkspace.shared.open(url)
+                }
+            }
             return
         }
 
-        // Close panel
+        // Close panel but DO NOT call NSApplication.shared.hide(nil)
+        // because hide() conflicts with explicitly activating another app.
         NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
 
-        // Give a tiny delay for the floating panel to visually disappear. 
-        // Since we use a nonactivatingPanel now, the user's original app 
-        // NEVER LOST frontmost focus! So we can just blast CMD+V generally.
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            let vKeyCode: CGKeyCode = 0x09
-            let cmdKeyCode: CGKeyCode = 0x37
-            guard let src = CGEventSource(stateID: .hidSystemState) else { return }
+        // Force focus back to the target app using an AppleScript workaround,
+        // which often bypasses WindowServer focus-stealing prevention better
+        // than NSRunningApplication.activate() for LSUIElement apps.
+        if let targetApp = previousApp, let appURL = targetApp.bundleURL {
+            let config = NSWorkspace.OpenConfiguration()
+            config.activates = true
+            NSWorkspace.shared.openApplication(at: appURL, configuration: config) { _, _ in
+                // Once the app is opened/activated, post the keystroke
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                    let vKeyCode: CGKeyCode = 0x09
+                    let cmdKeyCode: CGKeyCode = 0x37
+                    guard let src = CGEventSource(stateID: .hidSystemState) else { return }
 
-            let cmdDown = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: true)
-            let vDown   = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: true)
-            vDown?.flags = .maskCommand
-            let vUp     = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: false)
-            vUp?.flags  = .maskCommand
-            let cmdUp   = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: false)
+                    let cmdDown = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: true)
+                    let vDown   = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: true)
+                    vDown?.flags = .maskCommand
+                    let vUp     = CGEvent(keyboardEventSource: src, virtualKey: vKeyCode, keyDown: false)
+                    vUp?.flags  = .maskCommand
+                    let cmdUp   = CGEvent(keyboardEventSource: src, virtualKey: cmdKeyCode, keyDown: false)
 
-            let loc = CGEventTapLocation.cghidEventTap
-            cmdDown?.post(tap: loc)
-            vDown?.post(tap: loc)
-            vUp?.post(tap: loc)
-            cmdUp?.post(tap: loc)
+                    let loc = CGEventTapLocation.cghidEventTap
+                    cmdDown?.post(tap: loc)
+                    vDown?.post(tap: loc)
+                    vUp?.post(tap: loc)
+                    cmdUp?.post(tap: loc)
+                }
+            }
         }
     }
     

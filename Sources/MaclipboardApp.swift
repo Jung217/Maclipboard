@@ -31,7 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(forName: NSNotification.Name("HidePanel"), object: nil, queue: .main) { [weak self] _ in
             self?.floatingPanel.orderOut(nil)
             self?.popover.performClose(nil)
-            NSApplication.shared.hide(nil)
+            // Removed NSApplication.shared.hide(nil) — it interferes with explicit app activation
         }
         
         // Create the SwiftUI view for the popover/panel
@@ -88,7 +88,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.toggleFloatingPanel()
             }
         }
-        HotkeyManager.shared.registerCmdShiftV()
+        HotkeyManager.shared.registerCtrlV()
     }
     
     func storePreviousApp() {
