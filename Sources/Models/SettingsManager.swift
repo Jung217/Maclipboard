@@ -71,6 +71,7 @@ class SettingsManager: ObservableObject {
         
         if panel.runModal() == .OK, let url = panel.url {
             saveBookmark(for: url)
+            panelOpacity = 1.0
         }
     }
     

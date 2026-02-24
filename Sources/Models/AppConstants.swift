@@ -30,7 +30,7 @@ enum AppConstants {
     
     // Settings Defaults
     enum Settings {
-        static let defaultOpacity: Double = 0.95
+        static let defaultOpacity: Double = 0.80
         static let defaultColorHex: String = "" // Empty means use system default
         static let defaultAppearance: Int = 0 // 0: System, 1: Light, 2: Dark
         static let defaultBlurBackground: Bool = false

@@ -85,6 +85,7 @@ struct SettingsView: View {
                 
                 Button("Reset to Default") {
                     withAnimation {
+                        settings.clearBackgroundImage()
                         settings.panelOpacity = AppConstants.Settings.defaultOpacity
                         settings.panelColorHex = AppConstants.Settings.defaultColorHex
                         settings.appearanceMode = AppConstants.Settings.defaultAppearance

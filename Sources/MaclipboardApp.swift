@@ -155,6 +155,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         guard floatingPanel.isVisible,
               let frame = floatingPanel?.frame else { return }
               
+        // Prevent dismissal if a modal window (like NSOpenPanel) is currently active
+        if NSApp.modalWindow != nil {
+            return
+        }
+        
+        // Prevent dismissal if the user is clicking inside the macOS native Color Picker
+        if NSColorPanel.shared.isVisible {
+            let colorPanelFrame = NSColorPanel.shared.frame
+            if NSMouseInRect(NSEvent.mouseLocation, colorPanelFrame, false) {
+                return
+            }
+        }
+              
         if !NSMouseInRect(NSEvent.mouseLocation, frame, false) {
             floatingPanel.orderOut(nil)
         }
