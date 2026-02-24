@@ -89,6 +89,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         HotkeyManager.shared.registerCtrlV()
+        
+        setupEventMonitors()
     }
     
     func storePreviousApp() {
@@ -115,6 +117,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 // The popover itself will receive keystrokes without full app activation.
                 popover.contentViewController?.view.window?.makeKey()
             }
+        }
+    }
+    
+    var eventMonitor: Any?
+    var localEventMonitor: Any?
+    
+    func setupEventMonitors() {
+        // Global monitor catches clicks in other apps
+        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            self?.handleOutsideClick(event)
+        }
+        
+        // Local monitor catches clicks outside the panel but still within our app's menu bar/status item
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            self?.handleOutsideClick(event)
+            return event
+        }
+    }
+    
+    func handleOutsideClick(_ event: NSEvent) {
+        guard floatingPanel.isVisible else { return }
+        
+        let mouseLocation = NSEvent.mouseLocation
+        if !NSMouseInRect(mouseLocation, floatingPanel.frame, false) {
+            floatingPanel.orderOut(nil)
         }
     }
     
