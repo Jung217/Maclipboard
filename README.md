@@ -2,7 +2,7 @@
 
 > A lightweight, fast, and minimalistic clipboard manager for macOS built purely with SwiftUI. It runs invisibly in the background, keeping track of your clipboard history, and allows you to quickly access and auto-paste previously copied items.
 
-<img src="public/AppIcon.png" alt="AppIcon" style="width:100%;">
+<img src="public/AppIcon-modified.png" alt="AppIcon" style="width:30%;">
 
 
 ## ✨ Features
