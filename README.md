@@ -1,44 +1,48 @@
 # Maclipboard
 
-Maclipboard is a lightweight, fast, and minimalistic clipboard manager for macOS. It runs in the background, keeping track of your clipboard history, and allows you to quickly access and auto-paste previously copied items using keyboard hotkeys.
+A lightweight, fast, and minimalistic clipboard manager for macOS built purely with SwiftUI. It runs invisibly in the background, keeping track of your clipboard history, and allows you to quickly access and auto-paste previously copied items.
 
-## Features
-- **Clipboard History**: Automatically records text copied to your clipboard.
-- **Quick Access**: Bring up the clipboard history panel with a global hotkey.
-- **Auto-Paste**: Select an item from the history and it automatically pastes into your active application.
-- **Native & Lightweight**: Built purely with Swift and designed to consume minimal system resources with no heavy dependencies.
+## ✨ Features
 
-## Prerequisites
-To build and run this application yourself, you will need:
-- A macOS machine.
-- [Xcode Command Line Tools](https://developer.apple.com/xcode/features/) installed, which includes the Swift compiler (`swiftc`). You can install them by running `xcode-select --install` in your terminal.
+- **Global Hotkey Access**: Instantly bring up your clipboard history from any application by pressing `Cmd + Shift + V`.
+- **Keyboard-Driven Auto-Paste**: Navigate your history with the Up/Down Arrow keys and press `Return`, or simply click an item, to automatically paste it directly into your active window.
+- **Pinning**: Hover over any clipboard item and click the Pin icon to lock your most used clips to the top of the history permanently.
+- **Rich Customization**: Click the Gear icon in the panel header to access native settings:
+  - **Appearance Themes**: Force Light mode, Dark mode, or inherit dynamically from the macOS System.
+  - **Background Images**: Select any local photo from your Mac to automatically stretch across the panel background.
+  - **Opacity & Blur Control**: Adjust the background transparency slider, and optionally toggle a frosted glass blur effect that dynamically filters your chosen background image or color.
+  - **Custom Colors**: Pick a specific tint color for the panel background using the native macOS Color Picker.
 
-## How to Build and Run
+## 🚀 How to Build and Use
 
-Maclipboard includes a convenient `Makefile` to handle building and running the application natively without needing to open Xcode.
+Maclipboard is built purely natively and requires no heavy JavaScript dependencies. A convenient `Makefile` is included to handle building and running the application effortlessly from the terminal.
 
-1. **Navigate to the Project directory**:
-   Open your terminal and navigate to the folder containing the project files.
+### Prerequisites
+- macOS 13.0 or higher.
+- [Xcode Command Line Tools](https://developer.apple.com/xcode/features/) installed. (You can install them by running `xcode-select --install` in your terminal).
 
-2. **Build the Application**:
-   Simply run the following command in the project directory:
-   ```bash
-   make app
-   ```
-   This will compile the Swift source files and assemble the `Maclipboard.app` bundle in the `build/` directory.
-
-3. **Run the Application**:
-   To build and start the app immediately, run:
+### Running the App
+1. Open your terminal and navigate to the root folder of this project.
+2. Run the following command to compile and launch the application immediately:
    ```bash
    make run
    ```
-   This will launch the app. Make sure to grant it the necessary Accessibility permissions in **System Settings > Privacy & Security > Accessibility** if prompted, as it needs them to perform global hotkey listening and auto-pasting.
-
-4. **Clean the Build Directory**:
-   If you want to remove the compiled app and start fresh, run:
+3. Alternatively, if you only want to build the `Maclipboard.app` bundle into the `build/` directory without launching it, run:
+   ```bash
+   make app
+   ```
+4. To clean the build directory and start completely fresh, run:
    ```bash
    make clean
    ```
 
-## Customization
-Since you have the source code, you can easily tweak the app yourself. You can customize the application's appearance by editing the SwiftUI code in `Sources/ContentView.swift`, or modify the copy-paste behaviors and shortcuts in `Sources/Core/ClipboardManager.swift` and `Sources/Core/HotkeyManager.swift`.
+## ⚙️ Troubleshooting Permissions
+
+Because Maclipboard needs to listen for the global `Cmd+Shift+V` hotkey while running in the background, and needs to simulate `Cmd+V` keystrokes for the Auto-Paste feature, it strictly requires **Accessibility permissions** from macOS.
+
+**If pressing the hotkey does not open the panel, or if clicking an item does not paste it into your active app:**
+1. Open **System Settings** > **Privacy & Security** > **Accessibility**.
+2. Find `Maclipboard` in the list of applications.
+3. Ensure the toggle switch next to `Maclipboard` is turned **ON**.
+
+*Note: If permissions are granted but the app still isn't responding (common when rapidly rebuilding the application from source), macOS may have cached an old signature. Select `Maclipboard` in the Accessibility list, click the minus (`-`) button to remove it entirely, then run `make run` again to prompt a brand new permission dialog from the operating system.*

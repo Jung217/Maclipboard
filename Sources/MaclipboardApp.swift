@@ -7,7 +7,7 @@ struct MaclipboardApp: App {
     // We don't use a standard WindowGroup since it's a menu bar extra app
     var body: some Scene {
         Settings {
-            Text("Settings")
+            EmptyView()
         }
     }
 }
@@ -19,12 +19,12 @@ class BorderlessFloatingPanel: NSPanel {
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
     private var floatingPanel: NSPanel!
     private var eventMonitor: Any?
     private var localEventMonitor: Any?
     
     var clipboardManager = ClipboardManager()
+    var settingsManager = SettingsManager()
     
     // MARK: - App Lifecycle
 
@@ -32,7 +32,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         requestAccessibilityPermissions()
         setupNotificationObservers()
         
-        setupPopover()
         setupFloatingPanel()
         setupStatusItem()
         setupHotkeys()
@@ -49,16 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(forName: NSNotification.Name("HidePanel"), object: nil, queue: .main) { [weak self] _ in
             self?.floatingPanel.orderOut(nil)
-            self?.popover.performClose(nil)
         }
-    }
-
-    private func setupPopover() {
-        let contentView = ContentView().environmentObject(clipboardManager)
-        popover = NSPopover()
-        popover.contentSize = NSSize(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: contentView)
     }
 
     private func setupFloatingPanel() {
@@ -80,7 +70,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         floatingPanel.isOpaque = false
         floatingPanel.backgroundColor = .clear
         
-        let hostingView = NSHostingView(rootView: ContentView().environmentObject(clipboardManager))
+        let hostingView = NSHostingView(
+            rootView: ContentView()
+                .environmentObject(clipboardManager)
+                .environmentObject(settingsManager)
+        )
         hostingView.wantsLayer = true
         hostingView.layer?.cornerRadius = AppConstants.UI.cornerRadius
         hostingView.layer?.masksToBounds = true
@@ -123,27 +117,35 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     // MARK: - Actions
 
     @objc private func togglePopover(_ sender: AnyObject?) {
-        if floatingPanel.isVisible { floatingPanel.orderOut(nil) }
-        
-        guard let button = statusItem.button else { return }
-        
-        if popover.isShown {
-            popover.performClose(sender)
+        if floatingPanel.isVisible {
+            floatingPanel.orderOut(nil)
         } else {
+            guard let button = statusItem.button else { return }
             storePreviousApp()
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: NSRectEdge.minY)
-            popover.contentViewController?.view.window?.makeKey()
+            
+            let buttonFrame = button.window?.convertToScreen(button.frame) ?? NSRect.zero
+            let width = AppConstants.UI.panelWidth
+            let height = AppConstants.UI.panelHeight
+            
+            var x = buttonFrame.midX - (width / 2)
+            let y = buttonFrame.minY - height - 5
+            
+            let screen = NSScreen.screens.first(where: { NSPointInRect(buttonFrame.origin, $0.frame) }) ?? NSScreen.main ?? NSScreen.screens[0]
+            x = max(screen.visibleFrame.minX, min(x, screen.visibleFrame.maxX - width))
+            
+            floatingPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
+            floatingPanel.makeKeyAndOrderFront(nil)
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 
     func toggleFloatingPanel() {
-        if popover.isShown { popover.performClose(nil) }
-        
         if floatingPanel.isVisible && floatingPanel.isKeyWindow {
             floatingPanel.orderOut(nil)
         } else {
             capturePreviousAppFromHotkey()
             positionAndShowFloatingPanel()
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 

@@ -2,73 +2,108 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var clipboardManager: ClipboardManager
+    @EnvironmentObject var settings: SettingsManager
     @State private var selectedIndex: Int? = 0
-
+    @State private var showSettings: Bool = false
     
     var body: some View {
-        VStack(spacing: 0) {
-            // Header
-            HStack {
-                Text("Maclipboard")
-                    .font(.headline)
-                Spacer()
-                Button(action: {
-                    clipboardManager.clearUnpinnedHistory()
-                }) {
-                    Image(systemName: "trash")
-                        .foregroundColor(.red)
-                }
-                .buttonStyle(.plain)
-                .help("Clear Unpinned History")
-                
-                Button(action: {
-                    NSApplication.shared.terminate(nil)
-                }) {
-                    Image(systemName: "power")
-                }
-                .buttonStyle(.plain)
-                .padding(.leading, 8)
-                .help("Quit")
-            }
-            .padding()
-            .background(Color(NSColor.windowBackgroundColor))
-            
-            Divider()
-            
-            // List
-            if clipboardManager.history.isEmpty {
-                VStack {
-                    Spacer()
-                    Text("No history yet.")
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
+        ZStack {
+            // Background Image Layer
+            if let nsImage = settings.backgroundImage {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
+                    .blur(radius: settings.blurBackground ? settings.blurRadius : 0)
+                    .opacity(settings.panelOpacity)
+                    .clipped()
             } else {
-                ScrollViewReader { proxy in
-                    ScrollView {
-                        LazyVStack(spacing: 4) {
-                            ForEach(Array(clipboardManager.history.enumerated()), id: \.element.id) { index, item in
-                                ClipboardItemRow(
-                                    item: item,
-                                    isSelected: selectedIndex == index,
-                                    onSelect: {
-                                        selectedIndex = index
-                                    },
-                                    onCommit: {
-                                        clipboardManager.copyAndPaste(item: item)
-                                    }
-                                )
-                                .environmentObject(clipboardManager)
-                                .id(item.id)
-                            }
-                        }
-                        .padding(.vertical, 8)
+                settings.panelColor
+                    .opacity(settings.panelOpacity)
+            }
+            
+            // UI Layer
+            VStack(spacing: 0) {
+                // Header
+                HStack {
+                    Text("Maclipboard")
+                        .font(.headline)
+                    Spacer()
+                    
+                    Button(action: {
+                        clipboardManager.clearUnpinnedHistory()
+                    }) {
+                        Image(systemName: "trash")
+                            .foregroundColor(.red)
                     }
-                    .onChange(of: selectedIndex) { newIndex in
-                        if let index = newIndex, index >= 0, index < clipboardManager.history.count {
-                            DispatchQueue.main.async {
-                                withAnimation {
-                                    proxy.scrollTo(clipboardManager.history[index].id, anchor: .center)
+                    .buttonStyle(.plain)
+                    .help("Clear Unpinned History")
+                    
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showSettings.toggle()
+                        }
+                    }) {
+                        Image(systemName: "gearshape")
+                            .foregroundColor(showSettings ? .blue : .primary.opacity(0.8))
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 8)
+                    .help("Settings")
+                    
+                    Button(action: {
+                        NSApplication.shared.terminate(nil)
+                    }) {
+                        Image(systemName: "power")
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.leading, 8)
+                    .help("Quit")
+                }
+                .padding()
+                
+                Divider()
+                
+                // Content Area
+                if showSettings {
+                    SettingsView()
+                        .transition(.opacity)
+                } else {
+                    if clipboardManager.history.isEmpty {
+                        VStack {
+                            Spacer()
+                            Text("No history yet.")
+                                .foregroundColor(.secondary)
+                            Spacer()
+                        }
+                    } else {
+                        ScrollViewReader { proxy in
+                            ScrollView {
+                                LazyVStack(spacing: 4) {
+                                    ForEach(Array(clipboardManager.history.enumerated()), id: \.element.id) { index, item in
+                                        ClipboardItemRow(
+                                            item: item,
+                                            isSelected: selectedIndex == index,
+                                            onSelect: {
+                                                selectedIndex = index
+                                            },
+                                            onCommit: {
+                                                clipboardManager.copyAndPaste(item: item)
+                                            }
+                                        )
+                                        .environmentObject(clipboardManager)
+                                        .id(item.id)
+                                    }
+                                }
+                                .padding(.vertical, 8)
+                            }
+                            .onChange(of: selectedIndex) { newIndex in
+                                if let index = newIndex, index >= 0, index < clipboardManager.history.count {
+                                    DispatchQueue.main.async {
+                                        withAnimation {
+                                            proxy.scrollTo(clipboardManager.history[index].id, anchor: .center)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -77,7 +112,7 @@ struct ContentView: View {
             }
         }
         .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
-        .background(Color(NSColor.windowBackgroundColor))
+        .preferredColorScheme(settings.colorScheme)
         .background(
             Group {
                 Button("") { moveSelection(1) }
@@ -152,13 +187,13 @@ struct ClipboardItemRow: View {
         .contentShape(Rectangle()) // So the entire HStack is clickable
         .help(item.content) // Full text tooltip on hover
         .background(
-            isClicked ? Color.gray.opacity(0.3) :
-            (isSelected || isHovered ? Color.gray.opacity(0.1) : Color(NSColor.controlBackgroundColor))
+            isClicked ? Color.primary.opacity(0.2) :
+            (isSelected || isHovered ? Color.primary.opacity(0.12) : Color.primary.opacity(0.04))
         )
         // Adding a clear thin border to make cards "pop" per user request
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
         )
         .cornerRadius(10)
         .padding(.horizontal, 14)
