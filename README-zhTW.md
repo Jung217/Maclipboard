@@ -1,4 +1,5 @@
 # Maclipboard
+> **README in [English](https://github.com/Jung217/Maclipboard/blob/main/README.md)**
 
 > 一款專為 macOS 打造的輕量、快速且極簡的剪貼簿管理器，完全使用 SwiftUI 開發。它在背景無形運行，記錄您所有的剪貼簿歷史，讓您能快速存取並自動貼上先前複製的內容。
 
