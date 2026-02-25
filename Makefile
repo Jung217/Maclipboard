@@ -23,10 +23,15 @@ $(APP_DIR): $(SWIFT_SOURCES) Info.plist
 	@codesign --force --deep --sign - $(APP_DIR)
 	@echo "Build complete at $(APP_DIR)"
 
+dmg: app
+	@chmod +x dmg_scripts/create-dmg.sh
+	@./dmg_scripts/create-dmg.sh
+
 run: app
 	@open $(APP_DIR)
 
 clean:
 	@rm -rf build
+	@rm -f *.dmg
 
-.PHONY: all app run clean
+.PHONY: all app dmg run clean

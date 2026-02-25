@@ -36,9 +36,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusItem()
         setupHotkeys()
         setupEventMonitors()
+        
+        checkForDMGLaunch()
     }
     
     // MARK: - Setup
+    
+    private func checkForDMGLaunch() {
+        let bundlePath = Bundle.main.bundlePath
+        // A simple heuristic: if running from /Volumes/ and it's on a read-only filesystem (typical for DMGs)
+        if bundlePath.hasPrefix("/Volumes/") {
+            // Give the app a moment to finish launching before showing the alert
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                let alert = NSAlert()
+                alert.messageText = "Running from Installer"
+                alert.informativeText = "It looks like you opened Maclipboard directly from the installer disk image.\n\nPlease drag the Maclipboard app icon into the Applications folder shortcut provided in the installer window, then eject the installer and run the app from your Applications folder."
+                alert.alertStyle = .warning
+                alert.addButton(withTitle: "Quit")
+                alert.addButton(withTitle: "Continue Anyway")
+                
+                NSApp.activate(ignoringOtherApps: true)
+                let response = alert.runModal()
+                
+                if response == .alertFirstButtonReturn {
+                    NSApp.terminate(nil)
+                }
+            }
+        }
+    }
 
     private func requestAccessibilityPermissions() {
         let options: NSDictionary = [kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String: true]

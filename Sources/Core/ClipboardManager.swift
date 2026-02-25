@@ -150,18 +150,22 @@ class ClipboardManager: ObservableObject {
     
     // MARK: - Persistence
     
+    // MARK: - Persistence
+    
     private var storageURL: URL {
         let paths = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)
-        let appSupport = paths[0].appendingPathComponent(AppConstants.System.folderName)
-        
-        if !FileManager.default.fileExists(atPath: appSupport.path) {
-            try? FileManager.default.createDirectory(at: appSupport, withIntermediateDirectories: true)
-        }
-        return appSupport.appendingPathComponent(AppConstants.System.fileName)
+        return paths[0]
+            .appendingPathComponent(AppConstants.System.folderName)
+            .appendingPathComponent(AppConstants.System.fileName)
     }
     
     private func saveHistory() {
         do {
+            let directory = storageURL.deletingLastPathComponent()
+            if !FileManager.default.fileExists(atPath: directory.path) {
+                try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            }
+            
             let data = try JSONEncoder().encode(history)
             try data.write(to: storageURL)
         } catch {

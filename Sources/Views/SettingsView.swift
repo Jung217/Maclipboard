@@ -6,118 +6,135 @@ struct SettingsView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                
-                // Appearance Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Appearance")
-                        .font(.headline)
-                    
-                    Picker("Theme", selection: $settings.appearanceMode) {
-                        Text("System").tag(0)
-                        Text("Light").tag(1)
-                        Text("Dark").tag(2)
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-                
+                appearanceSection
                 Divider()
-                
-                // Panel Appearance Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("Panel Appearance")
-                        .font(.headline)
-                    
-                    HStack {
-                        Text("Background Image")
-                        Spacer()
-                        if let nsImage = settings.backgroundImage {
-                            Image(nsImage: nsImage)
-                                .resizable()
-                                .scaledToFill()
-                                .frame(width: 40, height: 25)
-                                .clipShape(RoundedRectangle(cornerRadius: 4))
-                                .overlay(
-                                    Button(action: {
-                                        withAnimation { settings.clearBackgroundImage() }
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.white)
-                                            .background(Circle().fill(Color.black.opacity(0.5)))
-                                    }
-                                    .buttonStyle(.plain)
-                                )
-                        } else {
-                            Button("Select Image...") {
-                                settings.selectBackgroundImage()
-                            }
-                        }
-                    }
-                    
-                    if settings.backgroundImage != nil {
-                        Toggle("Blur Background", isOn: $settings.blurBackground)
-                            .padding(.top, 4)
-                        
-                        if settings.blurBackground {
-                            HStack {
-                                Text("Blur Radius")
-                                    .foregroundColor(.secondary)
-                                Slider(value: $settings.blurRadius, in: 0...50)
-                                Text(String(format: "%.0f", settings.blurRadius))
-                                    .frame(width: 30, alignment: .trailing)
-                                    .foregroundColor(.secondary)
-                            }
-                            .padding(.leading, 16)
-                            .padding(.bottom, 4)
-                        }
-                    }
-                    
-                    ColorPicker("Background Color", selection: $settings.panelColor)
-                    
-                    HStack {
-                        Text("Opacity")
-                        Slider(value: $settings.panelOpacity, in: 0.1...1.0)
-                        Text(String(format: "%.0f%%", settings.panelOpacity * 100))
-                            .frame(width: 40, alignment: .trailing)
-                    }
-                }
-                .padding(.bottom, 8)
-                
-                Button("Reset to Default") {
-                    withAnimation {
-                        settings.clearBackgroundImage()
-                        settings.panelOpacity = AppConstants.Settings.defaultOpacity
-                        settings.panelColorHex = AppConstants.Settings.defaultColorHex
-                        settings.appearanceMode = AppConstants.Settings.defaultAppearance
-                    }
-                }
-                
+                panelAppearanceSection
+                resetButton
                 Divider()
-                
-                // About Section
-                VStack(alignment: .leading, spacing: 12) {
-                    Text("About")
-                        .font(.headline)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Link(destination: URL(string: "https://github.com/Jung217/Maclipboard")!) {
-                            Text("Maclipboard")
-                                .font(.subheadline).bold()
-                                .foregroundColor(.primary)
-                        }
-                        
-                        Text("A minimalist, keyboard-driven clipboard manager for macOS.")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                            
-                        Text("Copyright (c) 2026 C.J.Chien")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
+                aboutSection
             }
             .padding(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
+        }
+    }
+    
+    // MARK: - Subviews
+    
+    private var appearanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Appearance")
+                .font(.headline)
+            
+            Picker("Theme", selection: $settings.appearanceMode) {
+                Text("System").tag(0)
+                Text("Light").tag(1)
+                Text("Dark").tag(2)
+            }
+            .pickerStyle(.segmented)
+            .labelsHidden()
+        }
+    }
+    
+    private var panelAppearanceSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Panel Appearance")
+                .font(.headline)
+            
+            backgroundImageRow
+            
+            if settings.backgroundImage != nil {
+                Toggle("Blur Background", isOn: $settings.blurBackground)
+                    .padding(.top, 4)
+                
+                if settings.blurBackground {
+                    blurRadiusRow
+                }
+            }
+            
+            ColorPicker("Background Color", selection: $settings.panelColor)
+            
+            HStack {
+                Text("Opacity")
+                Slider(value: $settings.panelOpacity, in: 0.1...1.0)
+                Text(String(format: "%.0f%%", settings.panelOpacity * 100))
+                    .frame(width: 40, alignment: .trailing)
+            }
+        }
+        .padding(.bottom, 8)
+    }
+    
+    private var backgroundImageRow: some View {
+        HStack {
+            Text("Background Image")
+            Spacer()
+            if let nsImage = settings.backgroundImage {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 25)
+                    .clipShape(RoundedRectangle(cornerRadius: 4))
+                    .overlay(
+                        Button(action: {
+                            withAnimation { settings.clearBackgroundImage() }
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.white)
+                                .background(Circle().fill(Color.black.opacity(0.5)))
+                        }
+                        .buttonStyle(.plain)
+                    )
+            } else {
+                Button("Select Image...") {
+                    settings.selectBackgroundImage()
+                }
+            }
+        }
+    }
+    
+    private var blurRadiusRow: some View {
+        HStack {
+            Text("Blur Radius")
+                .foregroundColor(.secondary)
+            Slider(value: $settings.blurRadius, in: 0...50)
+            Text(String(format: "%.0f", settings.blurRadius))
+                .frame(width: 30, alignment: .trailing)
+                .foregroundColor(.secondary)
+        }
+        .padding(.leading, 16)
+        .padding(.bottom, 4)
+    }
+    
+    private var resetButton: some View {
+        Button("Reset to Default") {
+            withAnimation {
+                settings.clearBackgroundImage()
+                settings.panelOpacity = AppConstants.Settings.defaultOpacity
+                settings.panelColorHex = AppConstants.Settings.defaultColorHex
+                settings.appearanceMode = AppConstants.Settings.defaultAppearance
+            }
+        }
+    }
+    
+    private var aboutSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("About")
+                .font(.headline)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Link(destination: URL(string: "https://github.com/Jung217/Maclipboard")!) {
+                    Text("Maclipboard")
+                        .font(.subheadline).bold()
+                        .foregroundColor(.primary)
+                }
+                
+                Text("A minimalist, keyboard-driven clipboard manager for macOS.")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    
+                Text("Copyright (c) 2026 C.J.Chien")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
         }
     }
 }

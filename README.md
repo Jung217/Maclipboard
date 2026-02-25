@@ -5,10 +5,13 @@
 <img src="public/AppIcon-modified.png" alt="AppIcon" style="width:30%;">
 
 
+## 💡 Why Maclipboard?
+Compared to other similar products, Maclipboard is **super light (small but complete in every detail)**, features a **more native Apple UI**, and provides a **more intuitive user experience and keyboard shortcuts**.
+
 ## ✨ Features
 
-- **Global Hotkey Access**: Instantly bring up your clipboard history from any application by pressing `Ctrl + V`.
-- **Keyboard-Driven Auto-Paste**: Navigate your history with the Up/Down Arrow keys and press `Return`, or simply click an item, to automatically paste it directly into your active window.
+- **Global Hotkey Access**: Instantly bring up your clipboard history from any application by pressing <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd>.
+- **Keyboard-Driven Auto-Paste**: Navigate your history with the <kbd>UP (↑)</kbd> and <kbd>DOWN (↓)</kbd> keys and press <kbd>RETURN (⏎)</kbd>, or simply click an item, to automatically paste it directly into your active window.
 - **Pinning**: Hover over any clipboard item and click the Pin icon to lock your most used clips to the top of the history permanently.
 - **Rich Customization**: Click the Gear icon in the panel header to access native settings:
   - **Appearance Themes**: Force Light mode, Dark mode, or inherit dynamically from the macOS System.
@@ -18,8 +21,8 @@
 
 ## 🚀 Installation & Usage
 
-### 1. Download Pre-built Binary (Quickest)
-You can download the latest compiled `Maclipboard.app` directly from the [GitHub Releases](https://github.com/Jung217/Maclipboard/releases) page. Unzip the downloaded file and drag the application to your `Applications` folder!
+### 1. Download Pre-built Installer (Quickest)
+Download the latest `.dmg` installer from the [GitHub Releases](https://github.com/Jung217/Maclipboard/releases) page. Open the downloaded file and drag the Maclipboard application into the provided `Applications` folder shortcut!
 
 ### 2. Build from Source
 
@@ -39,14 +42,19 @@ Maclipboard is built purely natively and requires no heavy JavaScript dependenci
    ```bash
    make app
    ```
-4. To clean the build directory and start completely fresh, run:
+4. To create a drag-to-install DMG, run:
+   ```bash
+   make dmg
+   ```
+   *(Requires `create-dmg` which can be installed via `brew install create-dmg`)*
+5. To clean the build directory and start completely fresh, run:
    ```bash
    make clean
    ```
 
 ## ⚙️ Troubleshooting Permissions
 
-Because Maclipboard needs to listen for the global `Ctrl+V` hotkey while running in the background, and needs to simulate `Cmd+V` keystrokes for the Auto-Paste feature, it strictly requires **Accessibility permissions** from macOS.
+Because Maclipboard needs to listen for the global <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd> hotkey while running in the background, and needs to simulate <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> keystrokes for the Auto-Paste feature, it strictly requires **Accessibility permissions** from macOS.
 
 **If pressing the hotkey does not open the panel, or if clicking an item does not paste it into your active app:**
 1. Open **System Settings** > **Privacy & Security** > **Accessibility**.

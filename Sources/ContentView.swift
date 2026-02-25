@@ -16,140 +16,153 @@ struct ContentView: View {
     
     var body: some View {
         ZStack {
-            // Background Image Layer
-            if let nsImage = settings.backgroundImage {
-                Image(nsImage: nsImage)
-                    .resizable()
-                    .scaledToFill()
-                    .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
-                    .blur(radius: settings.blurBackground ? settings.blurRadius : 0)
-                    .opacity(settings.panelOpacity)
-                    .clipped()
-            } else {
-                settings.panelColor
-                    .opacity(settings.panelOpacity)
-            }
+            backgroundLayer
             
-            // UI Layer
             VStack(spacing: 0) {
-                // Header
-                HStack {
-                    Text("Maclipboard")
-                        .font(.headline)
-                    Spacer()
-                    
-                    Button(action: {
-                        clipboardManager.clearUnpinnedHistory()
-                    }) {
-                        Image(systemName: "trash")
-                            .foregroundColor(.red)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Clear Unpinned History")
-                    
-                    Button(action: {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showSettings.toggle()
-                        }
-                    }) {
-                        Image(systemName: "gearshape")
-                            .foregroundColor(showSettings ? .blue : .primary.opacity(0.8))
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.leading, 8)
-                    .help("Settings")
-                    
-                    Button(action: {
-                        NSApplication.shared.terminate(nil)
-                    }) {
-                        Image(systemName: "power")
-                    }
-                    .buttonStyle(.plain)
-                    .padding(.leading, 8)
-                    .help("Quit")
-                }
-                .padding()
+                headerView
                 
                 Divider()
                 
-                // Content Area
-                if showSettings {
-                    SettingsView()
-                        .transition(.opacity)
-                } else {
-                    if displayedHistory.isEmpty {
-                        VStack {
-                            Spacer()
-                            Text(selectedTab == 1 ? "No pinned items." : "No history yet.")
-                                .foregroundColor(.secondary)
-                            Spacer()
-                        }
-                    } else {
-                        ScrollViewReader { proxy in
-                            ScrollView {
-                                LazyVStack(spacing: 4) {
-                                    ForEach(Array(displayedHistory.enumerated()), id: \.element.id) { index, item in
-                                        ClipboardItemRow(
-                                            item: item,
-                                            isSelected: selectedIndex == index,
-                                            onSelect: {
-                                                selectedIndex = index
-                                            },
-                                            onCommit: {
-                                                clipboardManager.copyAndPaste(item: item)
-                                            }
-                                        )
-                                        .environmentObject(clipboardManager)
-                                        .id(item.id)
-                                    }
-                                }
-                                .padding(.vertical, 8)
-                            }
-                            .onChange(of: selectedIndex) { newIndex in
-                                if let index = newIndex, index >= 0, index < displayedHistory.count {
-                                    DispatchQueue.main.async {
-                                        withAnimation {
-                                            proxy.scrollTo(displayedHistory[index].id, anchor: .center)
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    Divider()
-                    
-                    Picker("", selection: $selectedTab) {
-                        Text("All").tag(0)
-                        Text("Pinned").tag(1)
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                }
+                contentArea
             }
         }
         .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
         .preferredColorScheme(settings.colorScheme)
-        .background(
-            Group {
-                Button("") { moveSelection(1) }
-                    .keyboardShortcut(.downArrow, modifiers: [])
-                Button("") { moveSelection(-1) }
-                    .keyboardShortcut(.upArrow, modifiers: [])
-                Button("") { handleReturn() }
-                    .keyboardShortcut(.return, modifiers: [])
-                Button("") { switchTab(-1) }
-                    .keyboardShortcut(.leftArrow, modifiers: [])
-                Button("") { switchTab(1) }
-                    .keyboardShortcut(.rightArrow, modifiers: [])
-            }
-            .frame(width: 0, height: 0)
-            .opacity(0)
-        )
+        .background(keyboardShortcutsLayer)
         .onAppear {
             selectedIndex = displayedHistory.isEmpty ? nil : 0
         }
+    }
+    
+    // MARK: - Subviews
+    
+    @ViewBuilder
+    private var backgroundLayer: some View {
+        if let nsImage = settings.backgroundImage {
+            Image(nsImage: nsImage)
+                .resizable()
+                .scaledToFill()
+                .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
+                .blur(radius: settings.blurBackground ? settings.blurRadius : 0)
+                .opacity(settings.panelOpacity)
+                .clipped()
+        } else {
+            settings.panelColor
+                .opacity(settings.panelOpacity)
+        }
+    }
+    
+    private var headerView: some View {
+        HStack {
+            Text("Maclipboard")
+                .font(.headline)
+            Spacer()
+            
+            Button(action: { clipboardManager.clearUnpinnedHistory() }) {
+                Image(systemName: "trash")
+                    .foregroundColor(.red)
+            }
+            .buttonStyle(.plain)
+            .help("Clear Unpinned History")
+            
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showSettings.toggle()
+                }
+            }) {
+                Image(systemName: "gearshape")
+                    .foregroundColor(showSettings ? .blue : .primary.opacity(0.8))
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 8)
+            .help("Settings")
+            
+            Button(action: { NSApplication.shared.terminate(nil) }) {
+                Image(systemName: "power")
+            }
+            .buttonStyle(.plain)
+            .padding(.leading, 8)
+            .help("Quit")
+        }
+        .padding()
+    }
+    
+    @ViewBuilder
+    private var contentArea: some View {
+        if showSettings {
+            SettingsView()
+                .transition(.opacity)
+        } else {
+            mainListView
+            Divider()
+            tabPickerView
+        }
+    }
+    
+    @ViewBuilder
+    private var mainListView: some View {
+        if displayedHistory.isEmpty {
+            VStack {
+                Spacer()
+                Text(selectedTab == 1 ? "No pinned items." : "No history yet.")
+                    .foregroundColor(.secondary)
+                Spacer()
+            }
+        } else {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 4) {
+                        ForEach(Array(displayedHistory.enumerated()), id: \.element.id) { index, item in
+                            ClipboardItemRow(
+                                item: item,
+                                isSelected: selectedIndex == index,
+                                onSelect: { selectedIndex = index },
+                                onCommit: { clipboardManager.copyAndPaste(item: item) }
+                            )
+                            .environmentObject(clipboardManager)
+                            .id(item.id)
+                        }
+                    }
+                    .padding(.vertical, 8)
+                }
+                .onChange(of: selectedIndex) { newIndex in
+                    if let index = newIndex, index >= 0, index < displayedHistory.count {
+                        DispatchQueue.main.async {
+                            withAnimation {
+                                proxy.scrollTo(displayedHistory[index].id, anchor: .center)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    private var tabPickerView: some View {
+        Picker("", selection: $selectedTab) {
+            Text("All").tag(0)
+            Text("Pinned").tag(1)
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+    
+    private var keyboardShortcutsLayer: some View {
+        Group {
+            Button("") { moveSelection(1) }
+                .keyboardShortcut(.downArrow, modifiers: [])
+            Button("") { moveSelection(-1) }
+                .keyboardShortcut(.upArrow, modifiers: [])
+            Button("") { handleReturn() }
+                .keyboardShortcut(.return, modifiers: [])
+            Button("") { switchTab(-1) }
+                .keyboardShortcut(.leftArrow, modifiers: [])
+            Button("") { switchTab(1) }
+                .keyboardShortcut(.rightArrow, modifiers: [])
+        }
+        .frame(width: 0, height: 0)
+        .opacity(0)
     }
     
     private func moveSelection(_ delta: Int) {
