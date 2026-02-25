@@ -8,6 +8,8 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0 // 0: All, 1: Pinned
     
     @State private var showPreview: Bool = false
+    @State private var errorItemId: UUID? = nil
+    @State private var errorTrigger: Int = 0
     
     private var displayedHistory: [ClipboardItem] {
         if selectedTab == 1 {
@@ -124,26 +126,12 @@ struct ContentView: View {
                 
                 // Content Card
                 VStack {
-                    HStack {
-                        Spacer()
-                        Button(action: {
-                            withAnimation(.easeOut(duration: 0.15)) {
-                                showPreview = false
-                            }
-                        }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
-                                .font(.title3)
-                        }
-                        .buttonStyle(.plain)
-                        .padding([.top, .trailing], 12)
-                    }
-                    
                     ScrollView {
                         Text(displayedHistory[idx].content)
                             .font(.system(.body, design: .monospaced))
                             .foregroundColor(.primary)
                             .padding(.horizontal, 16)
+                            .padding(.top, 16)
                             .padding(.bottom, 16)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -177,6 +165,7 @@ struct ContentView: View {
                             ClipboardItemRow(
                                 item: item,
                                 isSelected: selectedIndex == index,
+                                errorTrigger: errorItemId == item.id ? errorTrigger : 0,
                                 onSelect: { selectedIndex = index },
                                 onCommit: { clipboardManager.copyAndPaste(item: item) }
                             )
@@ -281,7 +270,14 @@ struct ContentView: View {
     private func handleDelete() {
         guard !showPreview, let idx = selectedIndex, idx < displayedHistory.count else { return }
         
-        let targetId = displayedHistory[idx].id
+        let targetItem = displayedHistory[idx]
+        if targetItem.isPinned {
+            errorItemId = targetItem.id
+            errorTrigger += 1
+            return
+        }
+        
+        let targetId = targetItem.id
         withAnimation(.easeOut(duration: 0.2)) {
             clipboardManager.deleteItem(id: targetId)
             
@@ -314,12 +310,15 @@ struct ContentView: View {
 struct ClipboardItemRow: View {
     let item: ClipboardItem
     let isSelected: Bool
+    let errorTrigger: Int
     let onSelect: () -> Void
     let onCommit: () -> Void
     
     @EnvironmentObject var clipboardManager: ClipboardManager
     @State private var isHovered = false
     @State private var isClicked = false
+    @State private var isError = false
+    @State private var shakeOffset: CGFloat = 0
     
     var body: some View {
         HStack {
@@ -349,14 +348,16 @@ struct ClipboardItemRow: View {
         .contentShape(Rectangle()) // So the entire HStack is clickable
         .help(item.content) // Full text tooltip on hover
         .background(
+            isError ? Color.red.opacity(0.3) :
             isClicked ? Color.primary.opacity(0.2) :
             (isSelected || isHovered ? Color.primary.opacity(0.12) : Color.primary.opacity(0.04))
         )
         // Adding a clear thin border to make cards "pop" per user request
         .overlay(
             RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.primary.opacity(0.1), lineWidth: 1)
+                .stroke(isError ? Color.red.opacity(0.6) : Color.primary.opacity(0.1), lineWidth: 1)
         )
+        .offset(x: shakeOffset)
         .cornerRadius(10)
         .padding(.horizontal, 14)
         .padding(.vertical, 4)
@@ -374,6 +375,18 @@ struct ClipboardItemRow: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
                 isClicked = false
                 onCommit()
+            }
+        }
+        .onChange(of: errorTrigger) { newValue in
+            if newValue > 0 {
+                withAnimation(.default) { isError = true }
+                withAnimation(.linear(duration: 0.05).repeatCount(5, autoreverses: true)) {
+                    shakeOffset = 6
+                }
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                    shakeOffset = 0
+                    withAnimation(.default) { isError = false }
+                }
             }
         }
     }
