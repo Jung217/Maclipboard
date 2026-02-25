@@ -19,6 +19,11 @@ class ClipboardManager: ObservableObject {
         loadHistory()
         startMonitoring()
         startDesktopMonitoring()
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("ScreenshotDirectoryChanged"), object: nil, queue: .main) { [weak self] _ in
+            self?.stopDesktopMonitoring()
+            self?.startDesktopMonitoring()
+        }
     }
     
     func startMonitoring() {
@@ -39,8 +44,8 @@ class ClipboardManager: ObservableObject {
     // MARK: - Desktop Monitor for Screenshots
     
     private func startDesktopMonitoring() {
-        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
-        let path = desktopURL.path
+        let screenshotURL = SettingsManager().screenshotDirectoryURL
+        let path = screenshotURL.path
         
         // Initialize seen files
         if let files = try? FileManager.default.contentsOfDirectory(atPath: path) {
@@ -75,8 +80,8 @@ class ClipboardManager: ObservableObject {
     }
     
     private func checkDesktopForNewScreenshots() {
-        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
-        let path = desktopURL.path
+        let screenshotURL = SettingsManager().screenshotDirectoryURL
+        let path = screenshotURL.path
         
         guard let currentFiles = try? FileManager.default.contentsOfDirectory(atPath: path) else { return }
         let newFiles = Set(currentFiles).subtracting(seenDesktopFiles)
@@ -86,7 +91,7 @@ class ClipboardManager: ObservableObject {
             // macOS screenshot default names in English and common languages
             let lowerFile = file.lowercased()
             if lowerFile.starts(with: "screen shot") || lowerFile.starts(with: "screenshot") || lowerFile.starts(with: "截圖") || lowerFile.starts(with: "螢幕快照") {
-                let fileURL = desktopURL.appendingPathComponent(file)
+                let fileURL = screenshotURL.appendingPathComponent(file)
                 
                 // Allow a tiny delay for the file write to finish
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in

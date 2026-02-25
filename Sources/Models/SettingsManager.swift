@@ -9,6 +9,11 @@ class SettingsManager: ObservableObject {
     @AppStorage("blurBackground") var blurBackground: Bool = AppConstants.Settings.defaultBlurBackground
     @AppStorage("blurRadius") var blurRadius: Double = AppConstants.Settings.defaultBlurRadius
     @AppStorage("clearOnQuit") var clearOnQuit: Bool = false
+    @AppStorage("screenshotDirBookmark") var screenshotDirBookmark: Data?
+    
+    @AppStorage("globalHotkeyKeyCode") var globalHotkeyKeyCode: Int = Int(AppConstants.KeyCode.v)
+    // 4096 is the Carbon constant for controlKey
+    @AppStorage("globalHotkeyModifiers") var globalHotkeyModifiers: Int = 4096
     
     @AppStorage("isLaunchAtLoginEnabled") private var isLaunchAtLoginEnabled: Bool = false
     
@@ -119,6 +124,64 @@ class SettingsManager: ObservableObject {
             backgroundImageBookmark = data
         } catch {
             print("Failed to save background image bookmark: \(error.localizedDescription)")
+        }
+    }
+    
+    // MARK: - Screenshot Directory Handling
+    
+    var screenshotDirectoryURL: URL {
+        if let bookmarkData = screenshotDirBookmark {
+            var isStale = false
+            do {
+                let url = try URL(resolvingBookmarkData: bookmarkData, options: .withSecurityScope, relativeTo: nil, bookmarkDataIsStale: &isStale)
+                if isStale {
+                    do {
+                        let newData = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+                        screenshotDirBookmark = newData
+                    } catch {}
+                }
+                return url
+            } catch {
+                print("Failed to resolve screenshot dir bookmark: \(error.localizedDescription)")
+            }
+        }
+        // Default to Desktop
+        return FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
+    }
+    
+    func selectScreenshotDirectory() {
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.allowsMultipleSelection = false
+        panel.message = "Choose a designated folder for screenshots"
+        
+        if panel.runModal() == .OK, let url = panel.url {
+            do {
+                let data = try url.bookmarkData(options: .withSecurityScope, includingResourceValuesForKeys: nil, relativeTo: nil)
+                screenshotDirBookmark = data
+                NotificationCenter.default.post(name: NSNotification.Name("ScreenshotDirectoryChanged"), object: nil)
+            } catch {
+                print("Failed to save screenshot dir bookmark: \(error.localizedDescription)")
+            }
+        }
+    }
+    
+    func resetScreenshotDirectory() {
+        screenshotDirBookmark = nil
+        NotificationCenter.default.post(name: NSNotification.Name("ScreenshotDirectoryChanged"), object: nil)
+    }
+    
+    // MARK: - Global Hotkey
+    
+    var globalHotkey: GlobalHotkey {
+        get {
+            GlobalHotkey(keyCode: UInt16(globalHotkeyKeyCode), modifiers: UInt32(globalHotkeyModifiers))
+        }
+        set {
+            globalHotkeyKeyCode = Int(newValue.keyCode)
+            globalHotkeyModifiers = Int(newValue.modifiers)
+            NotificationCenter.default.post(name: NSNotification.Name("GlobalHotkeyChanged"), object: nil)
         }
     }
 }

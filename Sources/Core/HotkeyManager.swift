@@ -6,10 +6,28 @@ class HotkeyManager {
     
     var action: (() -> Void)?
     var capturedApp: NSRunningApplication?
+    
+    private var hotKeyRef: EventHotKeyRef?
+    private var eventHandlerRef: EventHandlerRef?
 
     private init() {}
     
-    func registerCtrlV() {
+    func registerGlobalHotkey() {
+        if let currentRef = hotKeyRef {
+            UnregisterEventHotKey(currentRef)
+            hotKeyRef = nil
+        }
+        if let currentHandler = eventHandlerRef {
+            RemoveEventHandler(currentHandler)
+            eventHandlerRef = nil
+        }
+        
+        let defaultKeyCode: Int = 9 // kVK_ANSI_V
+        let defaultModifiers: Int = 4096 // controlKey
+        
+        let keyCode = UserDefaults.standard.object(forKey: "globalHotkeyKeyCode") as? Int ?? defaultKeyCode
+        let modifiers = UserDefaults.standard.object(forKey: "globalHotkeyModifiers") as? Int ?? defaultModifiers
+        
         var eventType = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
         
         let handler: EventHandlerUPP = { (_, _, _) -> OSStatus in
@@ -22,13 +40,10 @@ class HotkeyManager {
             return noErr
         }
         
-        InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, nil)
+        InstallEventHandler(GetApplicationEventTarget(), handler, 1, &eventType, nil, &eventHandlerRef)
         
         let hotKeyID = EventHotKeyID(signature: 1, id: 1)
-        var hotKeyRef: EventHotKeyRef?
         
-        // kVK_ANSI_V = 0x09 (9)
-        // controlKey = 0x1000 (4096)
-        RegisterEventHotKey(UInt32(kVK_ANSI_V), UInt32(controlKey), hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
+        RegisterEventHotKey(UInt32(keyCode), UInt32(modifiers), hotKeyID, GetApplicationEventTarget(), 0, &hotKeyRef)
     }
 }

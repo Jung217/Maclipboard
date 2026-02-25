@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @EnvironmentObject var settings: SettingsManager
+    @State private var isRecordingHotkey = false
     
     var body: some View {
         ScrollView {
@@ -10,9 +11,9 @@ struct SettingsView: View {
                 Divider()
                 panelAppearanceSection
                 Divider()
-                behaviorSection
+                screenshotSection
                 Divider()
-                resetButton
+                behaviorSection
                 Divider()
                 hotkeysSection
                 Divider()
@@ -26,8 +27,19 @@ struct SettingsView: View {
     
     private var appearanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Appearance")
-                .font(.headline)
+            HStack {
+                Text("Appearance")
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    withAnimation { settings.appearanceMode = AppConstants.Settings.defaultAppearance }
+                }) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Reset Appearance")
+            }
             
             Picker("Theme", selection: $settings.appearanceMode) {
                 Text("System").tag(0)
@@ -41,8 +53,23 @@ struct SettingsView: View {
     
     private var panelAppearanceSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("Panel Appearance")
-                .font(.headline)
+            HStack {
+                Text("Panel Appearance")
+                    .font(.headline)
+                Spacer()
+                Button(action: {
+                    withAnimation { 
+                        settings.clearBackgroundImage()
+                        settings.panelOpacity = AppConstants.Settings.defaultOpacity
+                        settings.panelColorHex = AppConstants.Settings.defaultColorHex
+                    }
+                }) {
+                    Image(systemName: "arrow.counterclockwise")
+                        .foregroundColor(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Reset Panel Appearance")
+            }
             
             backgroundImageRow
             
@@ -55,13 +82,16 @@ struct SettingsView: View {
                 }
             }
             
-            ColorPicker("Background Color", selection: $settings.panelColor)
+            HStack {
+                Text("Background Color")
+                Spacer()
+                ColorPicker("", selection: $settings.panelColor)
+                    .labelsHidden()
+            }
             
             HStack {
                 Text("Opacity")
-                Spacer()
                 Slider(value: $settings.panelOpacity, in: 0.1...1.0)
-                    .frame(width: 100)
                 Text(String(format: "%.0f%%", settings.panelOpacity * 100))
                     .frame(width: 40, alignment: .trailing)
             }
@@ -112,6 +142,43 @@ struct SettingsView: View {
         .padding(.bottom, 4)
     }
     
+    private var screenshotSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text("Screenshot Folder")
+                    .font(.headline)
+                Spacer()
+                if settings.screenshotDirBookmark != nil {
+                    Button(action: {
+                        withAnimation { settings.resetScreenshotDirectory() }
+                    }) {
+                        Image(systemName: "arrow.counterclockwise")
+                            .foregroundColor(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Reset to Default (Desktop)")
+                }
+            }
+            
+            HStack {
+                Text(settings.screenshotDirectoryURL.path)
+                    .foregroundColor(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .padding(.vertical, 4)
+                    .padding(.horizontal, 8)
+                    .background(Color.primary.opacity(0.05))
+                    .cornerRadius(4)
+                
+                Spacer()
+                
+                Button("Select Folder...") {
+                    settings.selectScreenshotDirectory()
+                }
+            }
+        }
+    }
+    
     private var behaviorSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Behavior")
@@ -122,30 +189,50 @@ struct SettingsView: View {
         }
         .padding(.bottom, 8)
     }
-    
-    private var resetButton: some View {
-        Button("Reset to Default") {
-            withAnimation {
-                settings.clearBackgroundImage()
-                settings.panelOpacity = AppConstants.Settings.defaultOpacity
-                settings.panelColorHex = AppConstants.Settings.defaultColorHex
-                settings.appearanceMode = AppConstants.Settings.defaultAppearance
-            }
-        }
-    }
     private var hotkeysSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text("Keyboard Shortcuts")
                 .font(.headline)
             
             VStack(alignment: .leading, spacing: 10) {
-                hotkeyRow(action: "Toggle Panel", keys: ["CONTROL (⌃)", "V"])
+                // Interactive Global Hotkey Recorder
+                HStack {
+                    Text("Toggle Panel (Global)")
+                        .foregroundColor(.primary)
+                    Spacer()
+                    
+                    Button(action: {
+                        isRecordingHotkey = true
+                    }) {
+                        Text(isRecordingHotkey ? "Recording..." : settings.globalHotkey.stringRepresentation)
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 4)
+                            .background(isRecordingHotkey ? Color.blue.opacity(0.2) : Color.primary.opacity(0.05))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 6)
+                                    .stroke(isRecordingHotkey ? Color.blue : Color.primary.opacity(0.15), lineWidth: 1)
+                            )
+                            .cornerRadius(6)
+                            .foregroundColor(isRecordingHotkey ? .blue : .primary)
+                            .font(.system(.caption, design: .monospaced))
+                    }
+                    .buttonStyle(.plain)
+                    .background(
+                        HotkeyRecorderView(hotkey: $settings.globalHotkey, isRecording: $isRecordingHotkey)
+                            .frame(width: 0, height: 0)
+                            .opacity(0)
+                    )
+                }
+                
+                Divider().opacity(0.5)
+                
                 hotkeyRow(action: "Navigate History", keys: ["UP (↑)", "DOWN (↓)"], separator: "/")
                 hotkeyRow(action: "Auto-Paste Item", keys: ["RETURN (⏎)"])
                 hotkeyRow(action: "Preview Full Text", keys: ["SPACE"])
                 hotkeyRow(action: "Toggle Pin Status", keys: ["CONTROL (⌃)", "P"])
                 hotkeyRow(action: "Switch Tabs", keys: ["LEFT (←)", "RIGHT (→)"], separator: "/")
                 hotkeyRow(action: "Delete Item", keys: ["COMMAND (⌘)", "BACKSPACE (⌫)"])
+                hotkeyRow(action: "Delete All Items", keys: ["COMMAND (⌘)", "SHIFT (⇧)", "BACKSPACE (⌫)"])
             }
             .font(.system(.caption, design: .rounded))
         }

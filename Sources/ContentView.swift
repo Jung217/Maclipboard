@@ -12,10 +12,12 @@ struct ContentView: View {
     @State private var errorTrigger: Int = 0
     
     private var displayedHistory: [ClipboardItem] {
-        if selectedTab == 1 {
-            return clipboardManager.history.filter { $0.isPinned }
+        switch selectedTab {
+        case 1: return clipboardManager.history.filter { $0.isPinned }
+        case 2: return clipboardManager.history.filter { $0.type == .image }
+        case 3: return clipboardManager.history.filter { $0.type == .file }
+        default: return clipboardManager.history
         }
-        return clipboardManager.history
     }
     
     var body: some View {
@@ -238,6 +240,8 @@ struct ContentView: View {
         Picker("", selection: $selectedTab) {
             Text("All").tag(0)
             Text("Pinned").tag(1)
+            Text("Images").tag(2)
+            Text("Files").tag(3)
         }
         .pickerStyle(.segmented)
         .padding(.horizontal)
@@ -264,6 +268,8 @@ struct ContentView: View {
                 .keyboardShortcut("p", modifiers: [.control])
             Button("") { handleDelete() }
                 .keyboardShortcut(.delete, modifiers: [.command])
+            Button("") { handleDeleteAll() }
+                .keyboardShortcut(.delete, modifiers: [.command, .shift])
             Button("") { handleEscape() }
                 .keyboardShortcut(.escape, modifiers: [])
         }
@@ -291,7 +297,7 @@ struct ContentView: View {
     
     private func switchTab(_ direction: Int) {
         guard !showSettings else { return }
-        let newTab = max(0, min(1, selectedTab + direction))
+        let newTab = max(0, min(3, selectedTab + direction))
         if newTab != selectedTab {
             withAnimation {
                 selectedTab = newTab
@@ -335,6 +341,16 @@ struct ContentView: View {
             } else {
                 selectedIndex = nil
             }
+        }
+    }
+    
+    private func handleDeleteAll() {
+        guard !showPreview else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            // Delete all items that currently match the active tab's filter criteria, except pinned ones
+            // Actually, macOS standard is "Clear Unpinned History" globally
+            clipboardManager.clearUnpinnedHistory()
+            selectedIndex = nil
         }
     }
     

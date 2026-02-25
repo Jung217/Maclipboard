@@ -132,7 +132,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.toggleFloatingPanel()
             }
         }
-        HotkeyManager.shared.registerCtrlV()
+        HotkeyManager.shared.registerGlobalHotkey()
+        
+        NotificationCenter.default.addObserver(forName: NSNotification.Name("GlobalHotkeyChanged"), object: nil, queue: .main) { _ in
+            HotkeyManager.shared.registerGlobalHotkey()
+        }
     }
 
     private func setupEventMonitors() {
