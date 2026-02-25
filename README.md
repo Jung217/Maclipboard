@@ -19,6 +19,9 @@ Compared to other similar products, Maclipboard is **super light (small but comp
   - <kbd>SPACE</kbd>: Open a full-text preview overlay of the selected item's content.
   - <kbd>CONTROL (⌃)</kbd> + <kbd>P</kbd>: Toggle the pin status of the selected item directly from your keyboard.
   - <kbd>COMMAND (⌘)</kbd> + <kbd>BACKSPACE (⌫)</kbd>: Permanently delete the selected item from your history.
+- **Rich Media Support**: Maclipboard isn't just for text!
+  - **Files**: Copies actual files and folders from Finder (via their path), displaying native document icons and allowing you to automatically paste them anywhere.
+  - **Native Screenshots**: Silently monitors your `~/Desktop` directory. Whenever you take a standard macOS screenshot (`Cmd+Shift+4` or `Cmd+Shift+5`), Maclipboard intercepts the new image and instantly adds it to your clipboard history!
 - **Rich Customization**: Click the Gear icon in the panel header to access native settings:
   - **Appearance Themes**: Force Light mode, Dark mode, or inherit dynamically from the macOS System.
   - **Background Images**: Select any local photo from your Mac to automatically stretch across the panel background.
@@ -62,6 +65,8 @@ Maclipboard is built purely natively and requires no heavy JavaScript dependenci
 ## ⚙️ Troubleshooting Permissions
 
 Because Maclipboard needs to listen for the global <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd> hotkey while running in the background, and needs to simulate <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> keystrokes for the Auto-Paste feature, it strictly requires **Accessibility permissions** from macOS.
+
+Additionally, to provide "Native Screenshot" support (`Cmd+Shift+4` / `Cmd+Shift+5`), Maclipboard requires **Desktop Folder access**. This allows it to briefly detect when macOS natively drops a new screenshot onto your Desktop so it can read the image into your clipboard history.
 
 **If pressing the hotkey does not open the panel, or if clicking an item does not paste it into your active app:**
 1. Open **System Settings** > **Privacy & Security** > **Accessibility**.
