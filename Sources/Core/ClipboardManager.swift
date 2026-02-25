@@ -9,10 +9,16 @@ class ClipboardManager: ObservableObject {
     private var lastChangeCount: Int
     private var timer: Timer?
     
+    // Desktop Monitoring for Native Screenshots
+    private var desktopMonitorSource: DispatchSourceFileSystemObject?
+    private var desktopMonitorDescriptor: Int32 = -1
+    private var seenDesktopFiles = Set<String>()
+    
     init() {
         self.lastChangeCount = pasteboard.changeCount
         loadHistory()
         startMonitoring()
+        startDesktopMonitoring()
     }
     
     func startMonitoring() {
@@ -27,7 +33,89 @@ class ClipboardManager: ObservableObject {
     func stopMonitoring() {
         timer?.invalidate()
         timer = nil
+        stopDesktopMonitoring()
     }
+    
+    // MARK: - Desktop Monitor for Screenshots
+    
+    private func startDesktopMonitoring() {
+        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
+        let path = desktopURL.path
+        
+        // Initialize seen files
+        if let files = try? FileManager.default.contentsOfDirectory(atPath: path) {
+            seenDesktopFiles = Set(files)
+        }
+        
+        desktopMonitorDescriptor = open(path, O_EVTONLY)
+        guard desktopMonitorDescriptor != -1 else { return }
+        
+        desktopMonitorSource = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: desktopMonitorDescriptor,
+            eventMask: .write,
+            queue: DispatchQueue.global(qos: .userInitiated)
+        )
+        
+        desktopMonitorSource?.setEventHandler { [weak self] in
+            self?.checkDesktopForNewScreenshots()
+        }
+        
+        desktopMonitorSource?.setCancelHandler { [weak self] in
+            guard let self = self else { return }
+            close(self.desktopMonitorDescriptor)
+            self.desktopMonitorDescriptor = -1
+        }
+        
+        desktopMonitorSource?.resume()
+    }
+    
+    private func stopDesktopMonitoring() {
+        desktopMonitorSource?.cancel()
+        desktopMonitorSource = nil
+    }
+    
+    private func checkDesktopForNewScreenshots() {
+        let desktopURL = FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first!
+        let path = desktopURL.path
+        
+        guard let currentFiles = try? FileManager.default.contentsOfDirectory(atPath: path) else { return }
+        let newFiles = Set(currentFiles).subtracting(seenDesktopFiles)
+        seenDesktopFiles = Set(currentFiles)
+        
+        for file in newFiles {
+            // macOS screenshot default names in English and common languages
+            let lowerFile = file.lowercased()
+            if lowerFile.starts(with: "screen shot") || lowerFile.starts(with: "screenshot") || lowerFile.starts(with: "截圖") || lowerFile.starts(with: "螢幕快照") {
+                let fileURL = desktopURL.appendingPathComponent(file)
+                
+                // Allow a tiny delay for the file write to finish
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+                    self?.processScreenshotFile(at: fileURL)
+                }
+            }
+        }
+    }
+    
+    private func processScreenshotFile(at url: URL) {
+        guard let image = NSImage(contentsOf: url),
+              let tiffData = image.tiffRepresentation else { return }
+        
+        let width = Int(image.size.width)
+        let height = Int(image.size.height)
+        var contentTitle = "[Screenshot \(width)x\(height)]"
+        
+        var finalData = tiffData
+        if finalData.count > 5 * 1024 * 1024,
+           let bitmapRep = NSBitmapImageRep(data: tiffData),
+           let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.7]) {
+            finalData = jpegData
+            contentTitle += " (Compr)"
+        }
+        
+        self.addItem(content: contentTitle, type: .image, imageData: finalData)
+    }
+    
+    // MARK: - Clipboard Monitor
     
     private func checkForChanges() {
         guard pasteboard.changeCount != lastChangeCount else { return }
@@ -46,21 +134,21 @@ class ClipboardManager: ObservableObject {
                 return
             }
             
-            // 2. Check for Images
-            if let imgData = self.pasteboard.data(forType: .tiff) ?? self.pasteboard.data(forType: .png) {
-                // Determine image size for title if possible
-                var contentTitle = "[Image]"
-                if let nsImage = NSImage(data: imgData) {
-                    contentTitle = "[Image \(Int(nsImage.size.width))x\(Int(nsImage.size.height))]"
-                }
+            // 2. Check for Images (More robust native NSImage extraction)
+            if let images = self.pasteboard.readObjects(forClasses: [NSImage.self], options: nil) as? [NSImage], !images.isEmpty {
+                let nsImage = images.first!
+                var contentTitle = "[Image \(Int(nsImage.size.width))x\(Int(nsImage.size.height))]"
                 
-                // Downsample image data if it's too large to prevent history bloat
-                var finalData = imgData
-                if finalData.count > 5 * 1024 * 1024 { // Compress if > 5MB
-                    if let bitmapRep = NSBitmapImageRep(data: imgData),
-                       let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.7]) {
-                        finalData = jpegData
-                    }
+                // Convert NSImage to optimal data format
+                guard let tiffData = nsImage.tiffRepresentation,
+                      let bitmapRep = NSBitmapImageRep(data: tiffData) else { return }
+                
+                // Use generic TIFF or fallback to compressed JPEG if large
+                var finalData = tiffData
+                if finalData.count > 5 * 1024 * 1024,
+                   let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.7]) {
+                    finalData = jpegData
+                    contentTitle += " (Compr)"
                 }
                 
                 DispatchQueue.main.async {

@@ -144,10 +144,36 @@ struct ContentView: View {
                             Image(nsImage: nsImage)
                                 .resizable()
                                 .scaledToFit()
-                                .padding()
+                                .padding(16)
+                        } else if item.type == .file, let path = item.fileURL {
+                            VStack(spacing: 12) {
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: path))
+                                    .resizable()
+                                    .scaledToFit()
+                                    .frame(width: 64, height: 64)
+                                    .padding(.top, 24)
+                                
+                                Text(item.content)
+                                    .font(.headline)
+                                    .multilineTextAlignment(.center)
+                                
+                                Text(path)
+                                    .font(.caption)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.center)
+                                    .padding(.horizontal, 24)
+                                
+                                if let attrs = try? FileManager.default.attributesOfItem(atPath: path),
+                                   let size = attrs[.size] as? Int64 {
+                                    Text(ByteCountFormatter.string(fromByteCount: size, countStyle: .file))
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .padding(.bottom, 24)
                         } else {
-                            Text(item.type == .file ? (item.fileURL ?? "Unknown File") : item.content)
-                                .font(.system(item.type == .file ? .body : .body, design: .monospaced))
+                            Text(item.content)
+                                .font(.system(.body, design: .monospaced))
                                 .foregroundColor(.primary)
                                 .padding(.horizontal, 16)
                                 .padding(.top, 16)
