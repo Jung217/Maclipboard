@@ -15,6 +15,10 @@ Compared to other similar products, Maclipboard is **super light (small but comp
 - **Keyboard-Driven Auto-Paste**: Navigate your history with the <kbd>UP (↑)</kbd> and <kbd>DOWN (↓)</kbd> keys and press <kbd>RETURN (⏎)</kbd>, or simply click an item, to automatically paste it directly into your active window.
 - **Pinning**: Hover over any clipboard item and click the Pin icon to lock your most used clips to the top of the history permanently.
 - **Tab Switching**: Use the <kbd>LEFT (←)</kbd> and <kbd>RIGHT (→)</kbd> arrow keys to quickly swap between viewing your entire clipboard history and exclusively your pinned items.
+- **Advanced Item Actions**: While selecting an item with the arrow keys:
+  - <kbd>SPACE</kbd>: Open a full-text preview overlay of the selected item's content.
+  - <kbd>CONTROL (⌃)</kbd> + <kbd>P</kbd>: Toggle the pin status of the selected item directly from your keyboard.
+  - <kbd>COMMAND (⌘)</kbd> + <kbd>BACKSPACE (⌫)</kbd>: Permanently delete the selected item from your history.
 - **Rich Customization**: Click the Gear icon in the panel header to access native settings:
   - **Appearance Themes**: Force Light mode, Dark mode, or inherit dynamically from the macOS System.
   - **Background Images**: Select any local photo from your Mac to automatically stretch across the panel background.

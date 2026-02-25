@@ -7,6 +7,8 @@ struct ContentView: View {
     @State private var showSettings: Bool = false
     @State private var selectedTab: Int = 0 // 0: All, 1: Pinned
     
+    @State private var showPreview: Bool = false
+    
     private var displayedHistory: [ClipboardItem] {
         if selectedTab == 1 {
             return clipboardManager.history.filter { $0.isPinned }
@@ -93,9 +95,68 @@ struct ContentView: View {
             SettingsView()
                 .transition(.opacity)
         } else {
-            mainListView
-            Divider()
-            tabPickerView
+            ZStack {
+                VStack(spacing: 0) {
+                    mainListView
+                    Divider()
+                    tabPickerView
+                }
+                
+                if showPreview {
+                    previewOverlay
+                }
+            }
+        }
+    }
+    
+    @ViewBuilder
+    private var previewOverlay: some View {
+        if let idx = selectedIndex, idx < displayedHistory.count {
+            ZStack {
+                // Dimmed background
+                Color.black.opacity(0.4)
+                    .edgesIgnoringSafeArea(.all)
+                    .onTapGesture {
+                        withAnimation(.easeOut(duration: 0.15)) {
+                            showPreview = false
+                        }
+                    }
+                
+                // Content Card
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: {
+                            withAnimation(.easeOut(duration: 0.15)) {
+                                showPreview = false
+                            }
+                        }) {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundColor(.secondary)
+                                .font(.title3)
+                        }
+                        .buttonStyle(.plain)
+                        .padding([.top, .trailing], 12)
+                    }
+                    
+                    ScrollView {
+                        Text(displayedHistory[idx].content)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(.primary)
+                            .padding(.horizontal, 16)
+                            .padding(.bottom, 16)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                .frame(width: AppConstants.UI.panelWidth * 0.9, height: AppConstants.UI.panelHeight * 0.7)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(settings.panelColor)
+                        .shadow(radius: 10)
+                )
+            }
+            .transition(.opacity)
+            .zIndex(1) // Ensure it draws above the list
         }
     }
     
@@ -160,6 +221,16 @@ struct ContentView: View {
                 .keyboardShortcut(.leftArrow, modifiers: [])
             Button("") { switchTab(1) }
                 .keyboardShortcut(.rightArrow, modifiers: [])
+                
+            // New Hotkeys
+            Button("") { handlePreview() }
+                .keyboardShortcut(.space, modifiers: [])
+            Button("") { handlePin() }
+                .keyboardShortcut("p", modifiers: [.control])
+            Button("") { handleDelete() }
+                .keyboardShortcut(.delete, modifiers: [.command])
+            Button("") { handleEscape() }
+                .keyboardShortcut(.escape, modifiers: [])
         }
         .frame(width: 0, height: 0)
         .opacity(0)
@@ -190,6 +261,52 @@ struct ContentView: View {
             withAnimation {
                 selectedTab = newTab
             }
+        }
+    }
+    
+    private func handlePreview() {
+        guard !displayedHistory.isEmpty else { return }
+        withAnimation(.easeIn(duration: 0.15)) {
+            showPreview.toggle()
+        }
+    }
+    
+    private func handlePin() {
+        guard !showPreview, let idx = selectedIndex, idx < displayedHistory.count else { return }
+        withAnimation(.spring(response: 0.3, dampingFraction: 0.6)) {
+            clipboardManager.togglePin(for: displayedHistory[idx].id)
+        }
+    }
+    
+    private func handleDelete() {
+        guard !showPreview, let idx = selectedIndex, idx < displayedHistory.count else { return }
+        
+        let targetId = displayedHistory[idx].id
+        withAnimation(.easeOut(duration: 0.2)) {
+            clipboardManager.deleteItem(id: targetId)
+            
+            // Adjust the selected index if we deleted the last item in the list
+            if let newCount = Optional(displayedHistory.count), newCount > 0 {
+                if idx >= newCount {
+                    selectedIndex = newCount - 1
+                }
+            } else {
+                selectedIndex = nil
+            }
+        }
+    }
+    
+    private func handleEscape() {
+        if showPreview {
+            withAnimation(.easeOut(duration: 0.15)) {
+                showPreview = false
+            }
+        } else if showSettings {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                showSettings = false
+            }
+        } else {
+            NotificationCenter.default.post(name: NSNotification.Name("HidePanel"), object: nil)
         }
     }
 }

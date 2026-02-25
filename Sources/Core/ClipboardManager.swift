@@ -65,6 +65,11 @@ class ClipboardManager: ObservableObject {
         }
     }
     
+    func deleteItem(id: UUID) {
+        history.removeAll { $0.id == id }
+        saveHistory()
+    }
+    
     func togglePin(for id: UUID) {
         if let index = history.firstIndex(where: { $0.id == id }) {
             history[index].isPinned.toggle()
