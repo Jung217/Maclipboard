@@ -119,28 +119,31 @@ struct SettingsView: View {
             }
         }
     }
-    
     private var hotkeysSection: some View {
-        VStack(alignment: .leading, spacing: 8) {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Keyboard Shortcuts")
                 .font(.headline)
-                .padding(.bottom, 4)
             
-            Group {
-                hotkeyRow(key: "⌃ V", action: "Toggle Panel")
-                hotkeyRow(key: "↑ ↓", action: "Navigate History")
-                hotkeyRow(key: "⏎", action: "Auto-Paste Item")
-                hotkeyRow(key: "← →", action: "Switch Tabs")
-                hotkeyRow(key: "Space", action: "Preview Full Text")
-                hotkeyRow(key: "⌃ P", action: "Toggle Pin Status")
-                hotkeyRow(key: "⌘ ⌫", action: "Delete Item")
+            VStack(alignment: .leading, spacing: 10) {
+                hotkeyRow(action: "Toggle Panel", key: "Control + V")
+                hotkeyRow(action: "Navigate History", key: "Up / Down")
+                hotkeyRow(action: "Auto-Paste Item", key: "Return")
+                hotkeyRow(action: "Preview Full Text", key: "Space")
+                hotkeyRow(action: "Toggle Pin Status", key: "Control + P")
+                hotkeyRow(action: "Switch Tabs", key: "Left / Right")
+                hotkeyRow(action: "Delete Item", key: "Command + Delete")
             }
             .font(.system(.caption, design: .rounded))
         }
     }
     
-    private func hotkeyRow(key: String, action: String) -> some View {
+    private func hotkeyRow(action: String, key: String) -> some View {
         HStack {
+            Text(action)
+                .foregroundColor(.secondary)
+            
+            Spacer()
+            
             Text(key)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 2)
@@ -148,9 +151,6 @@ struct SettingsView: View {
                 .cornerRadius(4)
                 .foregroundColor(.primary)
                 .bold()
-            
-            Text(action)
-                .foregroundColor(.secondary)
         }
     }
     
