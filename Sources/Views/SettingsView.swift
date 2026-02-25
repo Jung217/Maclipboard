@@ -91,9 +91,7 @@ struct SettingsView: View {
             
             HStack {
                 Text("Opacity")
-                Spacer()
                 Slider(value: $settings.panelOpacity, in: 0.1...1.0)
-                    .frame(width: 140)
                 Text(String(format: "%.0f%%", settings.panelOpacity * 100))
                     .frame(width: 40, alignment: .trailing)
             }
@@ -134,8 +132,7 @@ struct SettingsView: View {
             Text("Blur Radius")
                 .foregroundColor(.secondary)
             Spacer()
-            Slider(value: $settings.blurRadius, in: 0...50)
-                .frame(width: 100)
+            Slider(value: $settings.blurRadius, in: 0...100)
             Text(String(format: "%.0f", settings.blurRadius))
                 .frame(width: 30, alignment: .trailing)
                 .foregroundColor(.secondary)

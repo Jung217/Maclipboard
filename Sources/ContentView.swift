@@ -27,8 +27,6 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 headerView
                 
-                Divider()
-                
                 contentArea
             }
         }
@@ -114,7 +112,7 @@ struct ContentView: View {
             ZStack {
                 VStack(spacing: 0) {
                     mainListView
-                    Divider()
+
                     tabPickerView
                 }
                 
