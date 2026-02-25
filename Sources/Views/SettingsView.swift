@@ -11,6 +11,8 @@ struct SettingsView: View {
                 panelAppearanceSection
                 resetButton
                 Divider()
+                hotkeysSection
+                Divider()
                 aboutSection
             }
             .padding(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
@@ -54,7 +56,9 @@ struct SettingsView: View {
             
             HStack {
                 Text("Opacity")
+                Spacer()
                 Slider(value: $settings.panelOpacity, in: 0.1...1.0)
+                    .frame(width: 100)
                 Text(String(format: "%.0f%%", settings.panelOpacity * 100))
                     .frame(width: 40, alignment: .trailing)
             }
@@ -94,7 +98,9 @@ struct SettingsView: View {
         HStack {
             Text("Blur Radius")
                 .foregroundColor(.secondary)
+            Spacer()
             Slider(value: $settings.blurRadius, in: 0...50)
+                .frame(width: 100)
             Text(String(format: "%.0f", settings.blurRadius))
                 .frame(width: 30, alignment: .trailing)
                 .foregroundColor(.secondary)
@@ -111,6 +117,40 @@ struct SettingsView: View {
                 settings.panelColorHex = AppConstants.Settings.defaultColorHex
                 settings.appearanceMode = AppConstants.Settings.defaultAppearance
             }
+        }
+    }
+    
+    private var hotkeysSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Keyboard Shortcuts")
+                .font(.headline)
+                .padding(.bottom, 4)
+            
+            Group {
+                hotkeyRow(key: "⌃ V", action: "Toggle Panel")
+                hotkeyRow(key: "↑ ↓", action: "Navigate History")
+                hotkeyRow(key: "⏎", action: "Auto-Paste Item")
+                hotkeyRow(key: "← →", action: "Switch Tabs")
+                hotkeyRow(key: "Space", action: "Preview Full Text")
+                hotkeyRow(key: "⌃ P", action: "Toggle Pin Status")
+                hotkeyRow(key: "⌘ ⌫", action: "Delete Item")
+            }
+            .font(.system(.caption, design: .rounded))
+        }
+    }
+    
+    private func hotkeyRow(key: String, action: String) -> some View {
+        HStack {
+            Text(key)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(Color.primary.opacity(0.1))
+                .cornerRadius(4)
+                .foregroundColor(.primary)
+                .bold()
+            
+            Text(action)
+                .foregroundColor(.secondary)
         }
     }
     
