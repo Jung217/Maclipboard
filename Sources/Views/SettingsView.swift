@@ -125,32 +125,47 @@ struct SettingsView: View {
                 .font(.headline)
             
             VStack(alignment: .leading, spacing: 10) {
-                hotkeyRow(action: "Toggle Panel", key: "Control + V")
-                hotkeyRow(action: "Navigate History", key: "Up / Down")
-                hotkeyRow(action: "Auto-Paste Item", key: "Return")
-                hotkeyRow(action: "Preview Full Text", key: "Space")
-                hotkeyRow(action: "Toggle Pin Status", key: "Control + P")
-                hotkeyRow(action: "Switch Tabs", key: "Left / Right")
-                hotkeyRow(action: "Delete Item", key: "Command + Delete")
+                hotkeyRow(action: "Toggle Panel", keys: ["CONTROL (⌃)", "V"])
+                hotkeyRow(action: "Navigate History", keys: ["UP (↑)", "DOWN (↓)"], separator: "/")
+                hotkeyRow(action: "Auto-Paste Item", keys: ["RETURN (⏎)"])
+                hotkeyRow(action: "Preview Full Text", keys: ["SPACE"])
+                hotkeyRow(action: "Toggle Pin Status", keys: ["CONTROL (⌃)", "P"])
+                hotkeyRow(action: "Switch Tabs", keys: ["LEFT (←)", "RIGHT (→)"], separator: "/")
+                hotkeyRow(action: "Delete Item", keys: ["COMMAND (⌘)", "BACKSPACE (⌫)"])
             }
             .font(.system(.caption, design: .rounded))
         }
     }
     
-    private func hotkeyRow(action: String, key: String) -> some View {
+    private func hotkeyRow(action: String, keys: [String], separator: String = "+") -> some View {
         HStack {
             Text(action)
                 .foregroundColor(.secondary)
             
             Spacer()
             
-            Text(key)
-                .padding(.horizontal, 6)
-                .padding(.vertical, 2)
-                .background(Color.primary.opacity(0.1))
-                .cornerRadius(4)
-                .foregroundColor(.primary)
-                .bold()
+            HStack(spacing: 4) {
+                ForEach(Array(keys.enumerated()), id: \.offset) { index, key in
+                    Text(key)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
+                        .background(Color.primary.opacity(0.05))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 4)
+                                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+                        )
+                        .cornerRadius(4)
+                        .foregroundColor(.primary)
+                        .font(.system(.caption, design: .monospaced))
+                    
+                    if index < keys.count - 1 {
+                        Text(separator)
+                            .foregroundColor(.secondary)
+                            .fontWeight(.medium)
+                            .padding(.horizontal, 2)
+                    }
+                }
+            }
         }
     }
     
