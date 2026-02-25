@@ -201,6 +201,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 return
             }
         }
+        // Prevent dismissal if the user is clicking exactly on the status bar item
+        if let statusWindow = statusItem.button?.window {
+            let statusFrame = statusWindow.frame
+            // Since the status item is on the menu bar, verify it intersects the mouse.
+            // Mac menu bars are extremely thin at the top, and status item frames
+            // sometimes don't perfectly align with the global NSEvent.mouseLocation.
+            // But checking NSMouseInRect on the window frame works accurately here.
+            if NSMouseInRect(NSEvent.mouseLocation, statusFrame, false) {
+                return 
+            }
+        }
               
         if !NSMouseInRect(NSEvent.mouseLocation, frame, false) {
             floatingPanel.orderOut(nil)
