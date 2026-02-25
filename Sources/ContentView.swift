@@ -201,7 +201,8 @@ struct ContentView: View {
         if displayedHistory.isEmpty {
             VStack {
                 Spacer()
-                Text(selectedTab == 1 ? "No pinned items." : "No history yet.")
+                Text("#TODO : Fill this Void.")
+                    .font(.system(.body, design: .monospaced))
                     .foregroundColor(.secondary)
                 Spacer()
             }
@@ -244,6 +245,7 @@ struct ContentView: View {
             Text("Files").tag(3)
         }
         .pickerStyle(.segmented)
+        .controlSize(.small)
         .padding(.horizontal)
         .padding(.vertical, 8)
     }
