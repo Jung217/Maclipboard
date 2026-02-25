@@ -139,13 +139,21 @@ struct ContentView: View {
                 // Content Card
                 VStack {
                     ScrollView {
-                        Text(displayedHistory[idx].content)
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
-                            .padding(.bottom, 16)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                        let item = displayedHistory[idx]
+                        if item.type == .image, let data = item.imageData, let nsImage = NSImage(data: data) {
+                            Image(nsImage: nsImage)
+                                .resizable()
+                                .scaledToFit()
+                                .padding()
+                        } else {
+                            Text(item.type == .file ? (item.fileURL ?? "Unknown File") : item.content)
+                                .font(.system(item.type == .file ? .body : .body, design: .monospaced))
+                                .foregroundColor(.primary)
+                                .padding(.horizontal, 16)
+                                .padding(.top, 16)
+                                .padding(.bottom, 16)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        }
                     }
                 }
                 .frame(width: AppConstants.UI.panelWidth * 0.9, height: AppConstants.UI.panelHeight * 0.7)
@@ -334,13 +342,43 @@ struct ClipboardItemRow: View {
     
     var body: some View {
         HStack {
-            Text(item.content)
-                .lineLimit(2)
-                .truncationMode(.tail)
-                .font(.system(.body, design: .monospaced))
-                .foregroundColor(.primary)
-                .padding(.vertical, 14)
-                .padding(.leading, 16)
+            if item.type == .image, let data = item.imageData, let nsImage = NSImage(data: data) {
+                Image(nsImage: nsImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 40, height: 40)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .padding(.leading, 12)
+                    .padding(.vertical, 8)
+                
+                Text(item.content)
+                    .font(.system(.subheadline, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .padding(.leading, 4)
+            } else if item.type == .file {
+                Image(systemName: "doc.fill")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                    .foregroundColor(.blue)
+                    .padding(.leading, 16)
+                    .padding(.vertical, 12)
+                
+                Text(item.content)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                    .font(.system(.body))
+                    .foregroundColor(.primary)
+                    .padding(.leading, 4)
+            } else {
+                Text(item.content)
+                    .lineLimit(2)
+                    .truncationMode(.tail)
+                    .font(.system(.body, design: .monospaced))
+                    .foregroundColor(.primary)
+                    .padding(.vertical, 14)
+                    .padding(.leading, 16)
+            }
             
             Spacer()
             

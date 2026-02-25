@@ -33,22 +33,74 @@ class ClipboardManager: ObservableObject {
         guard pasteboard.changeCount != lastChangeCount else { return }
         lastChangeCount = pasteboard.changeCount
         
-        guard let newString = pasteboard.string(forType: .string) else { return }
-        
-        let cleanString = newString.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanString.isEmpty else { return }
-        
-        DispatchQueue.main.async {
-            self.addItem(content: cleanString)
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let self = self else { return }
+            
+            // 1. Check for Files
+            if let fileURLs = self.pasteboard.readObjects(forClasses: [NSURL.self], options: nil) as? [URL], !fileURLs.isEmpty {
+                let firstURL = fileURLs[0]
+                let content = firstURL.lastPathComponent
+                DispatchQueue.main.async {
+                    self.addItem(content: content, type: .file, fileURL: firstURL.path)
+                }
+                return
+            }
+            
+            // 2. Check for Images
+            if let imgData = self.pasteboard.data(forType: .tiff) ?? self.pasteboard.data(forType: .png) {
+                // Determine image size for title if possible
+                var contentTitle = "[Image]"
+                if let nsImage = NSImage(data: imgData) {
+                    contentTitle = "[Image \(Int(nsImage.size.width))x\(Int(nsImage.size.height))]"
+                }
+                
+                // Downsample image data if it's too large to prevent history bloat
+                var finalData = imgData
+                if finalData.count > 5 * 1024 * 1024 { // Compress if > 5MB
+                    if let bitmapRep = NSBitmapImageRep(data: imgData),
+                       let jpegData = bitmapRep.representation(using: .jpeg, properties: [.compressionFactor: 0.7]) {
+                        finalData = jpegData
+                    }
+                }
+                
+                DispatchQueue.main.async {
+                    self.addItem(content: contentTitle, type: .image, imageData: finalData)
+                }
+                return
+            }
+            
+            // 3. Fallback to Text
+            if let newString = self.pasteboard.string(forType: .string) {
+                let cleanString = newString.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !cleanString.isEmpty {
+                    DispatchQueue.main.async {
+                        self.addItem(content: cleanString, type: .text)
+                    }
+                }
+            }
         }
     }
     
-    func addItem(content: String) {
-        let wasPinned = history.first(where: { $0.content == content })?.isPinned ?? false
+    func addItem(content: String, type: ClipboardItemType = .text, imageData: Data? = nil, fileURL: String? = nil) {
+        let wasPinned = history.first(where: {
+            if type == .text { return $0.content == content && $0.type == .text }
+            if type == .image { return $0.imageData == imageData && $0.type == .image }
+            if type == .file { return $0.fileURL == fileURL && $0.type == .file }
+            return false
+        })?.isPinned ?? false
         
-        history.removeAll { $0.content == content }
+        // Remove existing items with exact same content to bump to top
+        history.removeAll {
+            if type == .text { return $0.content == content && $0.type == .text }
+            if type == .image { return $0.imageData == imageData && $0.type == .image }
+            if type == .file { return $0.fileURL == fileURL && $0.type == .file }
+            return false
+        }
         
         var item = ClipboardItem(content: content, timestamp: Date())
+        item.type = type
+        item.imageData = imageData
+        item.fileURL = fileURL
         item.isPinned = wasPinned
         history.insert(item, at: 0)
         
@@ -79,7 +131,21 @@ class ClipboardManager: ObservableObject {
     
     func copyToClipboard(item: ClipboardItem) {
         pasteboard.clearContents()
-        pasteboard.setString(item.content, forType: .string)
+        
+        switch item.type {
+        case .text:
+            pasteboard.setString(item.content, forType: .string)
+        case .image:
+            if let imgData = item.imageData {
+                pasteboard.setData(imgData, forType: .tiff)
+            }
+        case .file:
+            if let path = item.fileURL {
+                let url = URL(fileURLWithPath: path)
+                pasteboard.writeObjects([url as NSPasteboardWriting])
+            }
+        }
+        
         lastChangeCount = pasteboard.changeCount
     }
     
