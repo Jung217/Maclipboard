@@ -36,6 +36,10 @@ struct ContentView: View {
         .onAppear {
             selectedIndex = displayedHistory.isEmpty ? nil : 0
         }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PanelDidHide"))) { _ in
+            showSettings = false
+            showPreview = false
+        }
     }
     
     // MARK: - Subviews
@@ -89,6 +93,14 @@ struct ContentView: View {
             .help("Quit")
         }
         .padding()
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if showSettings {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    showSettings = false
+                }
+            }
+        }
     }
     
     @ViewBuilder

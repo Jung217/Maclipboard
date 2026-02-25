@@ -10,19 +10,33 @@ class SettingsManager: ObservableObject {
     @AppStorage("blurRadius") var blurRadius: Double = AppConstants.Settings.defaultBlurRadius
     @AppStorage("clearOnQuit") var clearOnQuit: Bool = false
     
-    @Published var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled {
+    @AppStorage("isLaunchAtLoginEnabled") private var isLaunchAtLoginEnabled: Bool = false
+    
+    @Published var launchAtLogin: Bool = false {
         didSet {
-            do {
-                if launchAtLogin {
-                    if SMAppService.mainApp.status == .notRegistered {
-                        try SMAppService.mainApp.register()
-                    }
-                } else {
+            isLaunchAtLoginEnabled = launchAtLogin
+            updateLaunchAtLoginState()
+        }
+    }
+    
+    init() {
+        self.launchAtLogin = UserDefaults.standard.bool(forKey: "isLaunchAtLoginEnabled")
+        updateLaunchAtLoginState()
+    }
+    
+    private func updateLaunchAtLoginState() {
+        do {
+            if launchAtLogin {
+                if SMAppService.mainApp.status != .enabled {
+                    try SMAppService.mainApp.register()
+                }
+            } else {
+                if SMAppService.mainApp.status == .enabled {
                     try SMAppService.mainApp.unregister()
                 }
-            } catch {
-                print("Failed to update SMAppService: \(error.localizedDescription)")
             }
+        } catch {
+            print("Failed to update SMAppService: \(error.localizedDescription)")
         }
     }
     

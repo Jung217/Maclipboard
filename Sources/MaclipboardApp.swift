@@ -79,6 +79,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupNotificationObservers() {
         NotificationCenter.default.addObserver(forName: NSNotification.Name("HidePanel"), object: nil, queue: .main) { [weak self] _ in
             self?.floatingPanel.orderOut(nil)
+            NotificationCenter.default.post(name: NSNotification.Name("PanelDidHide"), object: nil)
         }
     }
 
@@ -150,6 +151,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func togglePopover(_ sender: AnyObject?) {
         if floatingPanel.isVisible {
             floatingPanel.orderOut(nil)
+            NotificationCenter.default.post(name: NSNotification.Name("PanelDidHide"), object: nil)
         } else {
             guard let button = statusItem.button else { return }
             storePreviousApp()
@@ -173,6 +175,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func toggleFloatingPanel() {
         if floatingPanel.isVisible && floatingPanel.isKeyWindow {
             floatingPanel.orderOut(nil)
+            NotificationCenter.default.post(name: NSNotification.Name("PanelDidHide"), object: nil)
         } else {
             capturePreviousAppFromHotkey()
             positionAndShowFloatingPanel()
@@ -201,6 +204,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
               
         if !NSMouseInRect(NSEvent.mouseLocation, frame, false) {
             floatingPanel.orderOut(nil)
+            NotificationCenter.default.post(name: NSNotification.Name("PanelDidHide"), object: nil)
         }
     }
 
