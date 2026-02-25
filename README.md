@@ -11,22 +11,23 @@ Compared to other similar products, Maclipboard is **super light (small but comp
 
 ## ✨ Features
 
-- **Global Hotkey Access**: Instantly bring up your clipboard history from any application by pressing <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd>.
+- **Custom Global Hotkey**: Instantly bring up your clipboard history from any application. The default is <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd>, but can be re-recorded to any key combination in Settings!
 - **Keyboard-Driven Auto-Paste**: Navigate your history with the <kbd>UP (↑)</kbd> and <kbd>DOWN (↓)</kbd> keys and press <kbd>RETURN (⏎)</kbd>, or simply click an item, to automatically paste it directly into your active window.
-- **Pinning**: Hover over any clipboard item and click the Pin icon to lock your most used clips to the top of the history permanently.
-- **Tab Switching**: Use the <kbd>LEFT (←)</kbd> and <kbd>RIGHT (→)</kbd> arrow keys to quickly swap between viewing your entire clipboard history and exclusively your pinned items.
+- **Categorized Tabs**: Use the <kbd>LEFT (←)</kbd> and <kbd>RIGHT (→)</kbd> arrow keys to quickly swap between viewing `All` history, `Pinned` items, `Images`, or `Files`.
 - **Advanced Item Actions**: While selecting an item with the arrow keys:
   - <kbd>SPACE</kbd>: Open a full-text preview overlay of the selected item's content.
   - <kbd>CONTROL (⌃)</kbd> + <kbd>P</kbd>: Toggle the pin status of the selected item directly from your keyboard.
   - <kbd>COMMAND (⌘)</kbd> + <kbd>BACKSPACE (⌫)</kbd>: Permanently delete the selected item from your history.
+  - <kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>BACKSPACE (⌫)</kbd>: Delete all unpinned items instantly.
 - **Rich Media Support**: Maclipboard isn't just for text!
   - **Files**: Copies actual files and folders from Finder (via their path), displaying native document icons and allowing you to automatically paste them anywhere.
-  - **Native Screenshots**: Silently monitors your `~/Desktop` directory. Whenever you take a standard macOS screenshot (`Cmd+Shift+4` or `Cmd+Shift+5`), Maclipboard intercepts the new image and instantly adds it to your clipboard history!
+  - **Native Screenshots**: Silently monitors your designated screenshot directory (default: `~/Desktop`). Whenever you take a standard macOS screenshot (<kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>4</kbd> or <kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>5</kbd>), Maclipboard intercepts the new image and instantly adds it to your clipboard history!
 - **Rich Customization**: Click the Gear icon in the panel header to access native settings:
   - **Appearance Themes**: Force Light mode, Dark mode, or inherit dynamically from the macOS System.
   - **Background Images**: Select any local photo from your Mac to automatically stretch across the panel background.
   - **Opacity & Blur Control**: Adjust the background transparency slider, and optionally toggle a frosted glass blur effect that dynamically filters your chosen background image or color.
   - **Custom Colors**: Pick a specific tint color for the panel background using the native macOS Color Picker.
+  - **Custom Screenshot Folder**: Change the folder Maclipboard monitors for screenshot files.
   - **Behavior Setup**: Enable "Launch at Login" for automatic startup, or toggle "Clear History on Quit" to protect your privacy.
 
 ## 🚀 Installation & Usage
@@ -66,7 +67,7 @@ Maclipboard is built purely natively and requires no heavy JavaScript dependenci
 
 Because Maclipboard needs to listen for the global <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd> hotkey while running in the background, and needs to simulate <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> keystrokes for the Auto-Paste feature, it strictly requires **Accessibility permissions** from macOS.
 
-Additionally, to provide "Native Screenshot" support (`Cmd+Shift+4` / `Cmd+Shift+5`), Maclipboard requires **Desktop Folder access**. This allows it to briefly detect when macOS natively drops a new screenshot onto your Desktop so it can read the image into your clipboard history.
+Additionally, to provide "Native Screenshot" support (<kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>4</kbd> / <kbd>COMMAND (⌘)</kbd> + <kbd>SHIFT (⇧)</kbd> + <kbd>5</kbd>), Maclipboard requires **Desktop Folder access**. This allows it to briefly detect when macOS natively drops a new screenshot onto your Desktop so it can read the image into your clipboard history.
 
 **If pressing the hotkey does not open the panel, or if clicking an item does not paste it into your active app:**
 1. Open **System Settings** > **Privacy & Security** > **Accessibility**.

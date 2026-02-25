@@ -10,6 +10,7 @@ struct ContentView: View {
     @State private var showPreview: Bool = false
     @State private var errorItemId: UUID? = nil
     @State private var errorTrigger: Int = 0
+    @State private var isCursorBlinking: Bool = false
     
     private var displayedHistory: [ClipboardItem] {
         switch selectedTab {
@@ -199,9 +200,17 @@ struct ContentView: View {
         if displayedHistory.isEmpty {
             VStack {
                 Spacer()
-                Text("#TODO : Fill this Void.")
-                    .font(.system(.body, design: .monospaced))
-                    .foregroundColor(.secondary)
+                HStack(spacing: 2) {
+                    Text("#TODO : Fill this Void.")
+                    Text("︱")
+                        .opacity(isCursorBlinking ? 1.0 : 0.0)
+                        .animation(.easeInOut(duration: 0.7).repeatForever(autoreverses: true), value: isCursorBlinking)
+                }
+                .font(.system(.body, design: .monospaced))
+                .foregroundColor(.secondary)
+                .onAppear {
+                    isCursorBlinking = true
+                }
                 Spacer()
             }
         } else {
