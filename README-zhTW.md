@@ -65,7 +65,7 @@ Maclipboard 完全原生開發，不需要任何笨重的 JavaScript 依賴套�
 
 由於 Maclipboard 在背景執行時需要監聽全域的 <kbd>CONTROL (⌃)</kbd> + <kbd>V</kbd> 快速鍵，並為了「自動貼上」功能模擬 <kbd>COMMAND (⌘)</kbd> + <kbd>V</kbd> 鍵盤輸入，因此它嚴格要求 macOS 的**輔助使用（Accessibility）權限**。
 
-此外，為提供「原生螢幕快照」支援（`Cmd+Shift+4` / `Cmd+Shift+5`），Maclipboard 需要**「桌面（Desktop）資料夾」的存取權限**。這樣當 macOS 在您的桌面上產生新的截圖時，Maclipboard 就能偵測並將其無縫讀入到您的剪貼簿歷史中。
+此外，為提供「原生螢幕快照」支援（`Cmd+Shift+4` / `Cmd+Shift+5`），Maclipboard 需要 **「桌面（Desktop）資料夾」的存取權限**。這樣當 macOS 在您的桌面上產生新的截圖時，Maclipboard 就能偵測並將其無縫讀入到您的剪貼簿歷史中。
 
 **如果按下快速鍵並未開啟面板，或者點擊項目並未能將其貼上至您當前的應用程式中：**
 1. 開啟 **「系統設定」** > **「隱私權與安全性」** > **「輔助使用」**。
