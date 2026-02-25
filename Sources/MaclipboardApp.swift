@@ -40,6 +40,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         checkForDMGLaunch()
     }
     
+    func applicationWillTerminate(_ notification: Notification) {
+        if settingsManager.clearOnQuit {
+            clipboardManager.clearAllHistory()
+        }
+    }
+    
     // MARK: - Setup
     
     private func checkForDMGLaunch() {

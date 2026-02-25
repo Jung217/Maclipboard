@@ -9,6 +9,9 @@ struct SettingsView: View {
                 appearanceSection
                 Divider()
                 panelAppearanceSection
+                Divider()
+                behaviorSection
+                Divider()
                 resetButton
                 Divider()
                 hotkeysSection
@@ -107,6 +110,17 @@ struct SettingsView: View {
         }
         .padding(.leading, 16)
         .padding(.bottom, 4)
+    }
+    
+    private var behaviorSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Behavior")
+                .font(.headline)
+            
+            Toggle("Launch at Login", isOn: $settings.launchAtLogin)
+            Toggle("Clear History on Quit", isOn: $settings.clearOnQuit)
+        }
+        .padding(.bottom, 8)
     }
     
     private var resetButton: some View {

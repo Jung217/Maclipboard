@@ -153,6 +153,11 @@ class ClipboardManager: ObservableObject {
         saveHistory()
     }
     
+    func clearAllHistory() {
+        history.removeAll()
+        saveHistory()
+    }
+    
     // MARK: - Persistence
     
     // MARK: - Persistence

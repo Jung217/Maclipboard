@@ -1,4 +1,5 @@
 import SwiftUI
+import ServiceManagement
 
 class SettingsManager: ObservableObject {
     @AppStorage("panelOpacity") var panelOpacity: Double = AppConstants.Settings.defaultOpacity
@@ -7,6 +8,23 @@ class SettingsManager: ObservableObject {
     @AppStorage("backgroundImageBookmark") var backgroundImageBookmark: Data?
     @AppStorage("blurBackground") var blurBackground: Bool = AppConstants.Settings.defaultBlurBackground
     @AppStorage("blurRadius") var blurRadius: Double = AppConstants.Settings.defaultBlurRadius
+    @AppStorage("clearOnQuit") var clearOnQuit: Bool = false
+    
+    @Published var launchAtLogin: Bool = SMAppService.mainApp.status == .enabled {
+        didSet {
+            do {
+                if launchAtLogin {
+                    if SMAppService.mainApp.status == .notRegistered {
+                        try SMAppService.mainApp.register()
+                    }
+                } else {
+                    try SMAppService.mainApp.unregister()
+                }
+            } catch {
+                print("Failed to update SMAppService: \(error.localizedDescription)")
+            }
+        }
+    }
     
     // Convert hex string to SwiftUI Color
     var panelColor: Color {
