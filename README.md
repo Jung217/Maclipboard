@@ -24,6 +24,7 @@ Compared to other similar products, Maclipboard is **super light (small but comp
   - **Background Images**: Select any local photo from your Mac to automatically stretch across the panel background.
   - **Opacity & Blur Control**: Adjust the background transparency slider, and optionally toggle a frosted glass blur effect that dynamically filters your chosen background image or color.
   - **Custom Colors**: Pick a specific tint color for the panel background using the native macOS Color Picker.
+  - **Behavior Setup**: Enable "Launch at Login" for automatic startup, or toggle "Clear History on Quit" to protect your privacy.
 
 ## 🚀 Installation & Usage
 
