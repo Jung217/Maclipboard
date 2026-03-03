@@ -172,7 +172,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             floatingPanel.setFrame(NSRect(x: x, y: y, width: width, height: height), display: true)
             floatingPanel.makeKeyAndOrderFront(nil)
-            NSApp.activate(ignoringOtherApps: true)
             NotificationCenter.default.post(name: NSNotification.Name("PanelDidShow"), object: nil)
         }
     }
@@ -184,7 +183,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             capturePreviousAppFromHotkey()
             positionAndShowFloatingPanel()
-            NSApp.activate(ignoringOtherApps: true)
         }
     }
 
