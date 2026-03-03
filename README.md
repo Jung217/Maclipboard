@@ -30,6 +30,11 @@ Compared to other similar products, Maclipboard is **super light (small but comp
   - **Custom Screenshot Folder**: Change the folder Maclipboard monitors for screenshot files.
   - **Behavior Setup**: Enable "Launch at Login" for automatic startup, or toggle "Clear History on Quit" to protect your privacy.
 
+## 🆕 What's New
+
+- **Typing Experience Optimizer**: Waking up the Maclipboard panel via the global shortcut no longer steals focus, keeping text cursors active in your previous apps (like Google Chrome). The empty list blinking cursor (`︱`) animation has also been stabilized.
+- **Panel Interaction Fix**: Fixed a bug that would accidentally reveal the macOS native Color Panel when clicking on the blurred background or empty spaces on the top bar.
+
 ## 🚀 Installation & Usage
 
 ### 1. Download Pre-built Installer (Quickest)
