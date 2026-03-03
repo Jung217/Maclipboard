@@ -32,6 +32,10 @@ struct ContentView: View {
             }
         }
         .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
+        .overlay(
+            RoundedRectangle(cornerRadius: AppConstants.UI.cornerRadius)
+                .stroke(Color.primary.opacity(0.15), lineWidth: 1)
+        )
         .preferredColorScheme(settings.colorScheme)
         .background(keyboardShortcutsLayer)
         .onAppear {
@@ -67,6 +71,7 @@ struct ContentView: View {
             }
             .opacity(settings.panelOpacity)
         }
+        .allowsHitTesting(false)
     }
     
     private var headerView: some View {
