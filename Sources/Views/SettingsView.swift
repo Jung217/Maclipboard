@@ -73,15 +73,6 @@ struct SettingsView: View {
             
             backgroundImageRow
             
-            if settings.backgroundImage != nil {
-                Toggle("Blur Background", isOn: $settings.blurBackground)
-                    .padding(.top, 4)
-                
-                if settings.blurBackground {
-                    blurRadiusRow
-                }
-            }
-            
             HStack {
                 Text("Background Color")
                 Spacer()
@@ -91,10 +82,14 @@ struct SettingsView: View {
             
             HStack {
                 Text("Opacity")
-                Slider(value: $settings.panelOpacity, in: 0.1...1.0)
+                Spacer()
+                Slider(value: $settings.panelOpacity, in: 0.0...1.0)
+                    .frame(maxWidth: .infinity)
                 Text(String(format: "%.0f%%", settings.panelOpacity * 100))
-                    .frame(width: 40, alignment: .trailing)
+                    .frame(width: 45, alignment: .trailing)
             }
+            
+            blurRadiusRow
         }
         .padding(.bottom, 8)
     }
@@ -129,16 +124,13 @@ struct SettingsView: View {
     
     private var blurRadiusRow: some View {
         HStack {
-            Text("Blur Radius")
-                .foregroundColor(.secondary)
+            Text("Blur")
             Spacer()
             Slider(value: $settings.blurRadius, in: 0...100)
+                .frame(maxWidth: .infinity)
             Text(String(format: "%.0f", settings.blurRadius))
-                .frame(width: 30, alignment: .trailing)
-                .foregroundColor(.secondary)
+                .frame(width: 45, alignment: .trailing)
         }
-        .padding(.leading, 16)
-        .padding(.bottom, 4)
     }
     
     private var screenshotSection: some View {

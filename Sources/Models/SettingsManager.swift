@@ -6,7 +6,6 @@ class SettingsManager: ObservableObject {
     @AppStorage("panelColorHex") var panelColorHex: String = AppConstants.Settings.defaultColorHex
     @AppStorage("appearanceMode") var appearanceMode: Int = AppConstants.Settings.defaultAppearance // 0: System, 1: Light, 2: Dark
     @AppStorage("backgroundImageBookmark") var backgroundImageBookmark: Data?
-    @AppStorage("blurBackground") var blurBackground: Bool = AppConstants.Settings.defaultBlurBackground
     @AppStorage("blurRadius") var blurRadius: Double = AppConstants.Settings.defaultBlurRadius
     @AppStorage("clearOnQuit") var clearOnQuit: Bool = false
     @AppStorage("screenshotDirBookmark") var screenshotDirBookmark: Data?
@@ -114,7 +113,6 @@ class SettingsManager: ObservableObject {
     
     func clearBackgroundImage() {
         backgroundImageBookmark = nil
-        blurBackground = AppConstants.Settings.defaultBlurBackground
         blurRadius = AppConstants.Settings.defaultBlurRadius
     }
     

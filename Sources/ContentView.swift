@@ -47,17 +47,25 @@ struct ContentView: View {
     
     @ViewBuilder
     private var backgroundLayer: some View {
-        if let nsImage = settings.backgroundImage {
-            Image(nsImage: nsImage)
-                .resizable()
-                .scaledToFill()
-                .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
-                .blur(radius: settings.blurBackground ? settings.blurRadius : 0)
-                .opacity(settings.panelOpacity)
-                .clipped()
-        } else {
-            settings.panelColor
-                .opacity(settings.panelOpacity)
+        ZStack {
+            if settings.blurRadius > 0 {
+                VisualEffectBackground()
+                    .opacity(settings.blurRadius / 100.0)
+                    .edgesIgnoringSafeArea(.all)
+            }
+            
+            Group {
+                if let nsImage = settings.backgroundImage {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: AppConstants.UI.panelWidth, height: AppConstants.UI.panelHeight)
+                        .clipped()
+                } else {
+                    settings.panelColor
+                }
+            }
+            .opacity(settings.panelOpacity)
         }
     }
     
@@ -209,7 +217,13 @@ struct ContentView: View {
                 .font(.system(.body, design: .monospaced))
                 .foregroundColor(.secondary)
                 .onAppear {
-                    isCursorBlinking = true
+                    isCursorBlinking = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isCursorBlinking = true
+                    }
+                }
+                .onDisappear {
+                    isCursorBlinking = false
                 }
                 Spacer()
             }
@@ -481,17 +495,19 @@ struct ClipboardItemRow: View {
                 onCommit()
             }
         }
-        .onChange(of: errorTrigger) { newValue in
-            if newValue > 0 {
-                withAnimation(.default) { isError = true }
-                withAnimation(.linear(duration: 0.05).repeatCount(5, autoreverses: true)) {
-                    shakeOffset = 6
-                }
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                    shakeOffset = 0
-                    withAnimation(.default) { isError = false }
-                }
-            }
-        }
+    }
+}
+
+struct VisualEffectBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        // Standard macOS frosted glass behind the window
+        view.material = .popover
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {
     }
 }
