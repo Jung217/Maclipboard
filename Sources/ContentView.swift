@@ -230,6 +230,15 @@ struct ContentView: View {
                 .onDisappear {
                     isCursorBlinking = false
                 }
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PanelDidShow"))) { _ in
+                    isCursorBlinking = false
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isCursorBlinking = true
+                    }
+                }
+                .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("PanelDidHide"))) { _ in
+                    isCursorBlinking = false
+                }
                 Spacer()
             }
         } else {
